@@ -1,4 +1,6 @@
 import { toast } from 'sonner'
+import JSZip from 'jszip'
+import { saveAs } from 'file-saver'
 
 /**
  * Download a document with progress tracking shown in toast notifications.
@@ -88,6 +90,85 @@ export async function downloadDocument(docId: string, filename: string): Promise
   } catch (error) {
     // Update toast to error
     toast.error('Download failed', {
+      id: toastId,
+      description: error instanceof Error ? error.message : 'Unknown error'
+    })
+  }
+}
+
+/**
+ * Bulk download multiple documents as a single .zip file.
+ * Uses JSZip for browser-based zip creation and file-saver for download trigger.
+ *
+ * @param documents - Array of documents with id and name
+ */
+export async function downloadDocumentsBulk(
+  documents: Array<{ id: string; name: string }>
+): Promise<void> {
+  // Safety limit per RESEARCH.md pitfall #3 - JSZip memory issues
+  if (documents.length > 10) {
+    toast.error('Too many files selected', {
+      description: 'Please select 10 or fewer documents for bulk download'
+    })
+    return
+  }
+
+  if (documents.length === 0) {
+    toast.error('No documents selected')
+    return
+  }
+
+  let toastId: string | number = ''
+
+  try {
+    toastId = toast.loading('Preparing download...')
+
+    const zip = new JSZip()
+
+    // Fetch and add each document to the zip
+    for (let i = 0; i < documents.length; i++) {
+      const doc = documents[i]
+      toast.loading(`Downloading file ${i + 1} of ${documents.length}...`, { id: toastId })
+
+      // Fetch signed URL from API
+      const response = await fetch(`/api/documents/download?id=${doc.id}`)
+      if (!response.ok) {
+        throw new Error(`Failed to get download URL for ${doc.name}`)
+      }
+
+      const { signedUrl } = await response.json()
+
+      // Fetch actual file from signed URL
+      const fileResponse = await fetch(signedUrl)
+      if (!fileResponse.ok) {
+        throw new Error(`Failed to download ${doc.name}`)
+      }
+
+      const blob = await fileResponse.blob()
+      zip.file(doc.name, blob)
+    }
+
+    toast.loading('Creating zip file...', { id: toastId })
+
+    // Generate zip with compression
+    const content = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    })
+
+    // Generate filename with date
+    const filename = `documents-${new Date().toISOString().split('T')[0]}.zip`
+
+    // Trigger download
+    saveAs(content, filename)
+
+    toast.success(`Downloaded ${documents.length} files`, {
+      id: toastId,
+      description: filename
+    })
+  } catch (error) {
+    toast.error('Bulk download failed', {
       id: toastId,
       description: error instanceof Error ? error.message : 'Unknown error'
     })
