@@ -109,8 +109,7 @@ export default function DocumentsPage() {
   }
 
   const handleDeleteGenerated = async (id: string) => {
-    if (!confirm('Delete this file?')) return
-
+    // Note: confirmation dialog is handled in GeneratedFilesList component
     const response = await fetch(`/api/generated-files?id=${id}`, { method: 'DELETE' })
     if (response.ok) {
       setGeneratedFiles(files => files.filter(f => f.id !== id))

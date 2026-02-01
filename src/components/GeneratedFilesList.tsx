@@ -5,9 +5,16 @@ import Link from 'next/link'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { TypeBadge } from '@/components/TypeBadge'
+import { RenameDialog } from '@/components/RenameDialog'
 import { cn } from '@/lib/utils'
-import { ChevronDown, Download } from 'lucide-react'
+import { ChevronDown, Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { GeneratedFile } from '@/types/database'
 
 interface WeekGroup {
@@ -68,6 +75,7 @@ export function GeneratedFilesList({
   onDownload,
   onBulkDownload,
   onDelete,
+  onRename,
 }: GeneratedFilesListProps) {
   // Group files by week
   const weekGroups = useMemo(() => groupByWeek(files), [files])
@@ -77,6 +85,9 @@ export function GeneratedFilesList({
     const mostRecent = weekGroups[0]?.weekNumber
     return mostRecent !== undefined ? new Set([mostRecent]) : new Set()
   })
+
+  // Rename dialog state
+  const [renameTarget, setRenameTarget] = useState<GeneratedFile | null>(null)
 
   const toggleWeek = (week: number) => {
     setOpenWeeks(prev => {
@@ -109,6 +120,21 @@ export function GeneratedFilesList({
     onBulkDownload(group.files)
   }
 
+  const openRenameDialog = (file: GeneratedFile) => setRenameTarget(file)
+
+  const handleRename = (newName: string) => {
+    if (renameTarget) {
+      onRename(renameTarget.id, newName)
+      setRenameTarget(null)
+    }
+  }
+
+  const handleDelete = (file: GeneratedFile) => {
+    if (confirm('Delete this file?')) {
+      onDelete(file.id)
+    }
+  }
+
   // Empty state
   if (files.length === 0) {
     return (
@@ -123,9 +149,17 @@ export function GeneratedFilesList({
 
   return (
     <div className="space-y-2">
+      {/* Rename dialog */}
+      <RenameDialog
+        open={!!renameTarget}
+        onOpenChange={(open) => !open && setRenameTarget(null)}
+        currentName={renameTarget?.name || ''}
+        onRename={handleRename}
+      />
+
       {/* Bulk actions bar when files are selected */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg mb-4">
+        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg mb-4">
           <span className="text-sm text-gray-600">
             {selectedIds.size} file{selectedIds.size !== 1 ? 's' : ''} selected
           </span>
@@ -134,6 +168,10 @@ export function GeneratedFilesList({
             size="sm"
             onClick={() => {
               const selected = files.filter(f => selectedIds.has(f.id))
+              if (selected.length > 10) {
+                alert('Please select up to 10 files for bulk download.')
+                return
+              }
               onBulkDownload(selected)
             }}
           >
@@ -201,13 +239,26 @@ export function GeneratedFilesList({
                   >
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(file.id)}
-                  >
-                    Delete
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" aria-label="More options">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openRenameDialog(file)}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(file)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))}
