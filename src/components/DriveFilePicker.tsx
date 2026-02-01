@@ -1,0 +1,131 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+
+interface Folder {
+  id: string
+  name: string
+}
+
+interface DriveFilePickerProps {
+  onSelect: (folderId: string, folderName: string) => void
+  selectedFolderId?: string
+}
+
+export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [folders, setFolders] = useState<Folder[]>([])
+  const [currentFolder, setCurrentFolder] = useState<string | null>(null)
+  const [folderPath, setFolderPath] = useState<Array<{ id: string | null; name: string }>>([
+    { id: null, name: 'My Drive' },
+  ])
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedName, setSelectedName] = useState<string>('My Drive')
+
+  const fetchFolders = async (parentId?: string) => {
+    setIsLoading(true)
+    const url = parentId
+      ? `/api/drive/folders?parentId=${parentId}`
+      : '/api/drive/folders'
+
+    const response = await fetch(url)
+    if (response.ok) {
+      const data = await response.json()
+      setFolders(data)
+    }
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchFolders(currentFolder || undefined)
+    }
+  }, [isOpen, currentFolder])
+
+  const navigateToFolder = (folder: Folder) => {
+    setCurrentFolder(folder.id)
+    setFolderPath([...folderPath, { id: folder.id, name: folder.name }])
+  }
+
+  const navigateBack = (index: number) => {
+    const newPath = folderPath.slice(0, index + 1)
+    setFolderPath(newPath)
+    setCurrentFolder(newPath[newPath.length - 1].id)
+  }
+
+  const handleSelect = () => {
+    const current = folderPath[folderPath.length - 1]
+    onSelect(current.id || 'root', current.name)
+    setSelectedName(current.name)
+    setIsOpen(false)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full justify-start">
+          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.27 0 3.78-.01 3.78-.024 0-.015-1.7-2.97-3.78-6.567l-3.79-6.603c-.01-.012-1.69-.047-3.76-.047zm-3.76.062c-.01 0-1.7 2.97-3.78 6.567L.69 14.717c-.01.012 1.69.047 3.76.047s3.78-.02 3.78-.047c0-.02-1.7-2.97-3.78-6.567L.69 1.577c-.01-.012-.02-.03-.01-.03h7.57zM8.45 15.64l-3.78 6.57c-.01.012 1.69.047 3.76.047s3.78-.02 3.78-.047l3.78-6.57z"/>
+          </svg>
+          Save to: {selectedName}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Choose Google Drive Folder</DialogTitle>
+        </DialogHeader>
+
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1 text-sm text-gray-500 flex-wrap">
+          {folderPath.map((item, index) => (
+            <span key={index} className="flex items-center">
+              {index > 0 && <span className="mx-1">/</span>}
+              <button
+                onClick={() => navigateBack(index)}
+                className="hover:text-gray-900 hover:underline"
+              >
+                {item.name}
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {/* Folder list */}
+        <div className="border rounded-lg max-h-64 overflow-y-auto">
+          {isLoading ? (
+            <div className="p-4 text-center text-gray-500">Loading...</div>
+          ) : folders.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">No subfolders</div>
+          ) : (
+            <ul className="divide-y">
+              {folders.map((folder) => (
+                <li key={folder.id}>
+                  <button
+                    onClick={() => navigateToFolder(folder)}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
+                  >
+                    <svg className="mr-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                    </svg>
+                    {folder.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSelect}>
+            Select This Folder
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
