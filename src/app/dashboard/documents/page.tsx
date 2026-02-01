@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { DocumentUploader } from '@/components/DocumentUploader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { downloadDocument } from '@/lib/download'
+import { Checkbox } from '@/components/ui/checkbox'
+import { downloadDocument, downloadDocumentsBulk } from '@/lib/download'
 import { Download } from 'lucide-react'
 import type { Document } from '@/types/database'
 
@@ -18,6 +19,32 @@ const TYPE_LABELS: Record<string, string> = {
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === documents.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(documents.map(d => d.id)))
+    }
+  }
+
+  const handleBulkDownload = () => {
+    const selected = documents.filter(d => selectedIds.has(d.id))
+    downloadDocumentsBulk(selected.map(d => ({ id: d.id, name: d.name })))
+  }
 
   const fetchDocuments = async () => {
     const response = await fetch('/api/documents')
@@ -38,6 +65,12 @@ export default function DocumentsPage() {
     const response = await fetch(`/api/documents?id=${id}`, { method: 'DELETE' })
     if (response.ok) {
       setDocuments(documents.filter((d) => d.id !== id))
+      // Remove from selection if it was selected
+      setSelectedIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
     }
   }
 
@@ -71,39 +104,72 @@ export default function DocumentsPage() {
             ) : documents.length === 0 ? (
               <p className="text-gray-500">No documents uploaded yet</p>
             ) : (
-              <ul className="space-y-3">
-                {documents.map((doc) => (
-                  <li
-                    key={doc.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{doc.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {TYPE_LABELS[doc.type]} &bull;{' '}
-                        {new Date(doc.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(doc)}
-                        aria-label={`Download ${doc.name}`}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(doc.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <>
+                {/* Bulk actions bar */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={selectedIds.size === documents.length && documents.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all documents"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {selectedIds.size > 0
+                        ? `${selectedIds.size} selected`
+                        : 'Select all'}
+                    </span>
+                  </div>
+                  {selectedIds.size > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkDownload}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download {selectedIds.size} files
+                    </Button>
+                  )}
+                </div>
+
+                <ul className="space-y-3">
+                  {documents.map((doc) => (
+                    <li
+                      key={doc.id}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                    >
+                      <Checkbox
+                        checked={selectedIds.has(doc.id)}
+                        onCheckedChange={() => toggleSelection(doc.id)}
+                        aria-label={`Select ${doc.name}`}
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium">{doc.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {TYPE_LABELS[doc.type]} &bull;{' '}
+                          {new Date(doc.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(doc)}
+                          aria-label={`Download ${doc.name}`}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(doc.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </CardContent>
         </Card>
