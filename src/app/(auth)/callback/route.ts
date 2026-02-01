@@ -22,6 +22,7 @@ export async function GET(request: Request) {
           google_drive_token: {
             access_token: provider_token,
             refresh_token: provider_refresh_token,
+            scopes: 'drive.file drive.metadata.readonly',
           },
         })
       }
