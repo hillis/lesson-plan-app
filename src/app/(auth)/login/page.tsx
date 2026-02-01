@@ -1,24 +1,75 @@
 'use client'
 
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function LoginPage() {
   const supabase = createClient()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
 
   const handleGoogleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/callback`,
-        scopes: 'https://www.googleapis.com/auth/drive.file',
+        scopes: [
+          'https://www.googleapis.com/auth/drive.file',
+          'https://www.googleapis.com/auth/drive.metadata.readonly'
+        ].join(' '),
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
         },
       },
     })
+  }
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/callback`,
+        },
+      })
+      if (error) {
+        setError(error.message)
+      } else {
+        setMessage('Check your email for the confirmation link!')
+      }
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (error) {
+        setError(error.message)
+      } else if (data.session) {
+        // Create/update teacher record for email users
+        await supabase.from('teachers').upsert({
+          id: data.session.user.id,
+          email: data.session.user.email,
+          name: data.session.user.email?.split('@')[0],
+        })
+        window.location.href = '/dashboard'
+      }
+    }
+    setLoading(false)
   }
 
   return (
@@ -30,8 +81,64 @@ export default function LoginPage() {
             Sign in to create personalized lesson plans from your curriculum
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button onClick={handleGoogleSignIn} className="w-full" size="lg">
+        <CardContent className="space-y-6">
+          {/* Email/Password Form */}
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+            )}
+            {message && (
+              <p className="text-sm text-green-600 bg-green-50 p-2 rounded">{message}</p>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+            </Button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="w-full text-sm text-gray-600 hover:text-gray-900"
+          >
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Google Sign In */}
+          <Button onClick={handleGoogleSignIn} variant="outline" className="w-full" size="lg">
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -40,8 +147,8 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </Button>
-          <p className="mt-4 text-center text-sm text-gray-500">
-            We'll also request access to save files to your Google Drive
+          <p className="text-center text-xs text-gray-500">
+            Google login enables saving to Google Drive
           </p>
         </CardContent>
       </Card>
