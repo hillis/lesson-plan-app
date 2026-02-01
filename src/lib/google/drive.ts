@@ -1,6 +1,10 @@
 import { google } from 'googleapis'
 
-export function createDriveClient(accessToken: string, refreshToken?: string | null) {
+export function createDriveClient(
+  accessToken: string,
+  refreshToken?: string | null,
+  onTokenRefresh?: (tokens: { access_token?: string | null; refresh_token?: string | null }) => void
+) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -10,6 +14,12 @@ export function createDriveClient(accessToken: string, refreshToken?: string | n
     access_token: accessToken,
     refresh_token: refreshToken,
   })
+
+  if (onTokenRefresh) {
+    oauth2Client.on('tokens', (tokens) => {
+      onTokenRefresh(tokens)
+    })
+  }
 
   return google.drive({ version: 'v3', auth: oauth2Client })
 }
