@@ -1,5 +1,21 @@
 export type DocumentType = 'syllabus' | 'standards' | 'pacing_guide' | 'other'
 
+export type FileType = 'CTE' | 'Teacher' | 'Student' | 'Presentation'
+
+export interface GeneratedFile {
+  id: string
+  teacher_id: string
+  generation_id: string | null
+  name: string
+  file_path: string
+  file_size: number
+  mime_type: string
+  file_type: FileType
+  week_number: number
+  week_start_date: string | null  // ISO date string
+  created_at: string              // ISO timestamp
+}
+
 export interface Document {
   id: string
   teacher_id: string
