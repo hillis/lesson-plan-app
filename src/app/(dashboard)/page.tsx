@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { LessonGenerator } from '@/components/LessonGenerator'
-import type { Document } from '@/types/database'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -12,8 +11,8 @@ export default async function DashboardPage() {
     .select('id, name, type')
     .eq('teacher_id', user!.id)
 
-  const hasSyllabus = documents?.some((d: Document) => d.type === 'syllabus')
-  const hasStandards = documents?.some((d: Document) => d.type === 'standards')
+  const hasSyllabus = documents?.some((d) => d.type === 'syllabus')
+  const hasStandards = documents?.some((d) => d.type === 'standards')
 
   return (
     <div className="container mx-auto py-8">

@@ -1,13 +1,18 @@
-import pdf from 'pdf-parse'
 import mammoth from 'mammoth'
+
+// Dynamically import pdf-parse to avoid the test file loading issue
+async function parsePDF(buffer: Buffer): Promise<string> {
+  const pdfParse = (await import('pdf-parse/lib/pdf-parse')).default
+  const data = await pdfParse(buffer)
+  return data.text
+}
 
 export async function extractTextFromFile(
   buffer: Buffer,
   mimeType: string
 ): Promise<string> {
   if (mimeType === 'application/pdf') {
-    const data = await pdf(buffer)
-    return data.text
+    return await parsePDF(buffer)
   }
 
   if (
