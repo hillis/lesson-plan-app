@@ -5,8 +5,14 @@ import { DocumentUploader } from '@/components/DocumentUploader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { downloadDocument, downloadDocumentsBulk } from '@/lib/download'
-import { Download } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { downloadDocument, downloadDocumentsBulk, type DownloadFormat } from '@/lib/download'
+import { Download, ChevronDown } from 'lucide-react'
 import type { Document } from '@/types/database'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -15,6 +21,10 @@ const TYPE_LABELS: Record<string, string> = {
   pacing_guide: 'Pacing Guide',
   other: 'Other',
 }
+
+const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
+const isDocx = (mimeType: string | null) => mimeType === DOCX_MIME_TYPE
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
@@ -78,8 +88,8 @@ export default function DocumentsPage() {
     setDocuments([doc, ...documents])
   }
 
-  const handleDownload = (doc: Document) => {
-    downloadDocument(doc.id, doc.name)
+  const handleDownload = (doc: Document, format: DownloadFormat = 'original') => {
+    downloadDocument(doc.id, doc.name, format)
   }
 
   return (
@@ -150,14 +160,37 @@ export default function DocumentsPage() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(doc)}
-                          aria-label={`Download ${doc.name}`}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        {isDocx(doc.mime_type) ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                aria-label={`Download ${doc.name}`}
+                              >
+                                <Download className="h-4 w-4" />
+                                <ChevronDown className="h-3 w-3 ml-1" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleDownload(doc, 'original')}>
+                                Download as DOCX
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownload(doc, 'pdf')}>
+                                Download as PDF
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownload(doc, 'original')}
+                            aria-label={`Download ${doc.name}`}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"

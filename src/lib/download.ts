@@ -2,28 +2,61 @@ import { toast } from 'sonner'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 
+export type DownloadFormat = 'original' | 'pdf'
+
 /**
  * Download a document with progress tracking shown in toast notifications.
  * For larger files, shows download progress percentage.
  *
  * @param docId - The document ID to download
  * @param filename - The filename to save the file as
+ * @param format - Download format: 'original' (default) or 'pdf' (for DOCX files)
  */
-export async function downloadDocument(docId: string, filename: string): Promise<void> {
+export async function downloadDocument(
+  docId: string,
+  filename: string,
+  format: DownloadFormat = 'original'
+): Promise<void> {
   let toastId: string | number = ''
 
   try {
     // Show initial loading toast
-    toastId = toast.loading('Preparing download...')
+    const formatLabel = format === 'pdf' ? 'Converting to PDF...' : 'Preparing download...'
+    toastId = toast.loading(formatLabel)
 
-    // Fetch signed URL from API
-    const response = await fetch(`/api/documents/download?id=${docId}`)
+    // Fetch from API with format parameter
+    const response = await fetch(`/api/documents/download?id=${docId}&format=${format}`)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Download failed' }))
       throw new Error(errorData.error || 'Download failed')
     }
 
+    // For PDF conversion, the API returns the file directly (not a signed URL)
+    if (format === 'pdf') {
+      // The response is the PDF blob directly
+      const blob = await response.blob()
+
+      // Adjust filename for PDF
+      const pdfFilename = filename.replace(/\.docx$/i, '.pdf')
+
+      // Create object URL and trigger download
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = pdfFilename
+      document.body.appendChild(link)
+      link.click()
+
+      // Clean up
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      toast.success('Download complete', { id: toastId, description: pdfFilename })
+      return
+    }
+
+    // Original format: use signed URL approach with progress tracking
     const { signedUrl } = await response.json()
 
     // Fetch actual file from signed URL
