@@ -134,11 +134,12 @@ export function DocumentUploader({ onUploadComplete }: DocumentUploaderProps) {
                 className="hidden"
                 id="file-upload"
               />
-              <Label htmlFor="file-upload" asChild>
-                <Button variant="outline" className="cursor-pointer">
-                  Choose File
-                </Button>
-              </Label>
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                Choose File
+              </Button>
             </>
           )}
         </div>

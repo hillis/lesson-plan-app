@@ -73,23 +73,16 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
       // Step 2: Save to Google Drive if requested
       if (saveToDrive) {
         setStatus('saving')
-        setStatusMessage('Saving to Google Drive...')
+        setStatusMessage('Generating documents and saving to Google Drive...')
 
-        // TODO: Convert lesson_plan to actual document files
-        // For now, save the JSON as a placeholder
+        // Send lesson_plan to the server - it will generate DOCX files
         const saveResponse = await fetch('/api/drive/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             generation_id,
             folder_name: `Week ${weekNumber} - ${lesson_plan.unit}`,
-            files: [
-              {
-                name: `Week${weekNumber}_LessonPlan.json`,
-                content: Buffer.from(JSON.stringify(lesson_plan, null, 2)).toString('base64'),
-                mimeType: 'application/json',
-              },
-            ],
+            lesson_plan,
           }),
         })
 
