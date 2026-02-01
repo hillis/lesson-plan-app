@@ -22,19 +22,37 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
     { id: null, name: 'My Drive' },
   ])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [selectedName, setSelectedName] = useState<string>('My Drive')
 
   const fetchFolders = async (parentId?: string) => {
     setIsLoading(true)
+    setError(null)
+
     const url = parentId
       ? `/api/drive/folders?parentId=${parentId}`
       : '/api/drive/folders'
 
-    const response = await fetch(url)
-    if (response.ok) {
-      const data = await response.json()
-      setFolders(data)
+    try {
+      const response = await fetch(url)
+
+      if (response.ok) {
+        const data = await response.json()
+        setFolders(data)
+      } else if (response.status === 401) {
+        const data = await response.json()
+        if (data.needsReauth) {
+          setError('Your Google Drive permissions need to be updated. Please sign out and sign in again to grant folder access.')
+        } else {
+          setError('Please sign in with Google to access Drive folders.')
+        }
+      } else {
+        setError('Failed to load folders. Please try again.')
+      }
+    } catch (err) {
+      setError('Failed to connect to Google Drive.')
     }
+
     setIsLoading(false)
   }
 
@@ -96,6 +114,16 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
         <div className="border rounded-lg max-h-64 overflow-y-auto">
           {isLoading ? (
             <div className="p-4 text-center text-gray-500">Loading...</div>
+          ) : error ? (
+            <div className="p-4 text-center">
+              <p className="text-red-600 text-sm mb-2">{error}</p>
+              <a
+                href="/api/auth/signout"
+                className="text-blue-600 hover:underline text-sm"
+              >
+                Sign out to re-authenticate
+              </a>
+            </div>
           ) : folders.length === 0 ? (
             <div className="p-4 text-center text-gray-500">No subfolders</div>
           ) : (
