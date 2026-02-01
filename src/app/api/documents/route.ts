@@ -20,7 +20,23 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data)
+  // Filter out documents with missing storage files
+  // Use createSignedUrl as existence check (lightweight, doesn't download file)
+  const availableDocuments = []
+  for (const doc of data || []) {
+    const { error: storageError } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(doc.file_path, 60)
+
+    if (storageError) {
+      // File missing from storage - hide from list
+      console.warn(`Document ${doc.id} missing from storage: ${doc.file_path}`)
+      continue
+    }
+    availableDocuments.push(doc)
+  }
+
+  return NextResponse.json(availableDocuments)
 }
 
 export async function POST(request: Request) {
