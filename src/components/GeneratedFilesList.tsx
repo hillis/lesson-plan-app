@@ -241,18 +241,23 @@ export function GeneratedFilesList({
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" aria-label="More options">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="More options"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openRenameDialog(file)}>
+                    <DropdownMenuContent align="end" className="z-[100] bg-white border shadow-lg">
+                      <DropdownMenuItem onClick={() => openRenameDialog(file)} className="cursor-pointer">
                         <Pencil className="h-4 w-4 mr-2" />
                         Rename
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleDelete(file)}
-                        className="text-red-600"
+                        className="text-red-600 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
