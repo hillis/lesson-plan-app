@@ -73,7 +73,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Lesson Plan Generator</CardTitle>
@@ -109,10 +109,10 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+              <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</p>
             )}
             {message && (
-              <p className="text-sm text-green-600 bg-green-50 p-2 rounded">{message}</p>
+              <p className="text-sm text-success bg-success/10 p-2 rounded">{message}</p>
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -123,7 +123,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
-            className="w-full text-sm text-gray-600 hover:text-gray-900"
+            className="w-full text-sm text-muted-foreground hover:text-foreground"
           >
             {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
           </button>
@@ -133,7 +133,7 @@ export default function LoginPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or continue with</span>
+              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
 
@@ -147,7 +147,7 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </Button>
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-xs text-muted-foreground">
             Google login enables saving to Google Drive
           </p>
         </CardContent>
