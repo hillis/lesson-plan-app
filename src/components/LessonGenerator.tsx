@@ -83,6 +83,7 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
             generation_id,
             folder_name: `Week ${weekNumber} - ${lesson_plan.unit}`,
             lesson_plan,
+            folder_id: driveFolderId,
           }),
         })
 
