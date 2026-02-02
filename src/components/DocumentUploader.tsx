@@ -107,7 +107,7 @@ export function DocumentUploader({ onUploadComplete }: DocumentUploaderProps) {
         <div
           className={`
             border-2 border-dashed rounded-lg p-8 text-center transition-colors
-            ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-200'}
+            ${isDragging ? 'border-primary bg-primary/5' : 'border-border'}
             ${isUploading ? 'opacity-50 pointer-events-none' : ''}
           `}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
@@ -117,14 +117,14 @@ export function DocumentUploader({ onUploadComplete }: DocumentUploaderProps) {
           {isUploading ? (
             <div className="space-y-2">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-              <p className="text-sm text-gray-500">Processing document...</p>
+              <p className="text-sm text-muted-foreground">Processing document...</p>
             </div>
           ) : (
             <>
-              <p className="text-gray-500 mb-2">
+              <p className="text-muted-foreground mb-2">
                 Drag & drop a file here, or click to browse
               </p>
-              <p className="text-xs text-gray-400 mb-4">
+              <p className="text-xs text-muted-foreground/70 mb-4">
                 Supports PDF, Word (.docx), and text files
               </p>
               <input

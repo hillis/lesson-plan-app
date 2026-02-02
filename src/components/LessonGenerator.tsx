@@ -197,7 +197,7 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
           <Label htmlFor="instructions">Additional Instructions (optional)</Label>
           <textarea
             id="instructions"
-            className="w-full min-h-[80px] px-3 py-2 border rounded-md text-sm"
+            className="w-full min-h-[80px] px-3 py-2 border border-input bg-background text-foreground rounded-md text-sm"
             placeholder="e.g., Focus on hands-on activities, Include a quiz on Friday..."
             value={customInstructions}
             onChange={(e) => setCustomInstructions(e.target.value)}
@@ -231,8 +231,8 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
 
         {/* Result */}
         {result?.driveUrl && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800">
+          <div className="p-4 bg-success/10 border border-success/30 rounded-lg">
+            <p className="text-success-foreground">
               Files saved to Google Drive:{' '}
               <a
                 href={result.driveUrl}
