@@ -21,6 +21,14 @@ import { TemplateUploader } from '@/components/TemplateUploader'
 import { useToast } from '@/hooks/use-toast'
 import type { Template } from '@/types/database'
 
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+
 interface TemplatePanelProps {
   selectedId: string | null
   onSelect: (template: Template) => void
@@ -183,7 +191,7 @@ export function TemplatePanel({ selectedId, onSelect }: TemplatePanelProps) {
                       )}
                     </div>
 
-                    {/* Template name and badge */}
+                    {/* Template name, badge, and metadata */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium truncate">{template.name}</span>
@@ -193,6 +201,12 @@ export function TemplatePanel({ selectedId, onSelect }: TemplatePanelProps) {
                           </span>
                         )}
                       </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {template.is_default
+                          ? 'Built-in template with standard CTE format'
+                          : `${formatBytes(template.file_size || 0)} - ${template.created_at ? new Date(template.created_at).toLocaleDateString() : 'Unknown date'}`
+                        }
+                      </p>
                     </div>
 
                     {/* Kebab menu - only for user templates (not default) */}
