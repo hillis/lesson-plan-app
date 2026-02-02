@@ -384,3 +384,48 @@ export async function downloadGeneratedFilesBulk(
     })
   }
 }
+
+/**
+ * Download all generated files as a single ZIP using server-side streaming.
+ * Bypasses the 10-file JSZip limit by using the server-side archiver endpoint.
+ *
+ * @param fileIds - Array of generated file IDs to include in ZIP
+ */
+export async function downloadAllGeneratedFiles(
+  fileIds: string[]
+): Promise<void> {
+  if (fileIds.length === 0) {
+    toast.error('No files to download')
+    return
+  }
+
+  const toastId = toast.loading('Preparing download...')
+
+  try {
+    const response = await fetch('/api/generated-files/download-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileIds }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Download failed' }))
+      throw new Error(error.error || 'Download failed')
+    }
+
+    toast.loading('Creating ZIP file...', { id: toastId })
+
+    const blob = await response.blob()
+    const filename = response.headers
+      .get('Content-Disposition')
+      ?.match(/filename="(.+)"/)?.[1] || `lesson-plans-${new Date().toISOString().split('T')[0]}.zip`
+
+    saveAs(blob, filename)
+    toast.success(`Downloaded ${fileIds.length} files`, { id: toastId })
+  } catch (error) {
+    toast.error('Download failed', {
+      id: toastId,
+      description: error instanceof Error ? error.message : 'Unknown error',
+    })
+  }
+}
