@@ -77,11 +77,26 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
     setCurrentFolder(newPath[newPath.length - 1].id)
   }
 
-  const handleSelect = () => {
+  const handleSelect = async () => {
     const current = folderPath[folderPath.length - 1]
-    onSelect(current.id || 'root', current.name)
+    const folderId = current.id || 'root'
+
+    // Call parent callback immediately for responsive UI
+    onSelect(folderId, current.name)
     setSelectedName(current.name)
     setIsOpen(false)
+
+    // Save preference to database (fire-and-forget, don't block UI)
+    try {
+      await fetch('/api/teacher/folder-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder_id: folderId }),
+      })
+    } catch (error) {
+      // Silently fail - preference not saved but current session still works
+      console.error('Failed to save folder preference:', error)
+    }
   }
 
   const handleCreateFolder = async () => {
