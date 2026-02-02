@@ -1,36 +1,139 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lesson Plan Generator
+
+An AI-powered web application that helps educators create personalized, CTE (Career & Technical Education)-format lesson plans in minutes. Upload your curriculum materials once, then generate complete weekly lesson plans with just a few clicks.
+
+## Features
+
+- **AI-Powered Generation** - Uses Claude AI to analyze your curriculum and generate comprehensive lesson plans
+- **Document Upload** - Upload syllabus, standards, pacing guides, and other curriculum materials (PDF, DOCX, TXT)
+- **Customizable Output** - Configure days per week, include/exclude student handouts and presentations
+- **Google Drive Integration** - Automatically save generated files to your Google Drive in organized folders
+- **CTE Format** - Generates lesson plans in standard Career & Technical Education format with:
+  - Daily learning objectives
+  - Detailed time-based schedules
+  - Differentiation strategies (Advanced, Struggling, ELL learners)
+  - Vocabulary definitions
+  - Assessment strategies
+  - Content standards alignment
+
+## Tech Stack
+
+**Frontend:**
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Radix UI / shadcn/ui components
+
+**Backend:**
+- Supabase (Authentication, PostgreSQL Database, File Storage)
+- Claude AI (Anthropic SDK)
+- Google Drive API
+
+**Document Processing:**
+- mammoth (Word documents)
+- pdf-parse (PDF extraction)
+- docx / pptxgenjs (Document generation)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Supabase account
+- Anthropic API key
+- Google Cloud project with Drive API enabled
+
+### Environment Setup
+
+Create a `.env.local` file with the following variables:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# AI
+ANTHROPIC_API_KEY=your_anthropic_key
+
+# Google OAuth & Drive
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/drive/auth/callback
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Install dependencies
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run development server
+npm run dev
 
-## Learn More
+# Build for production
+npm run build
 
-To learn more about Next.js, take a look at the following resources:
+# Start production server
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Authentication pages
+│   ├── api/               # API routes
+│   ├── dashboard/         # Protected dashboard pages
+│   └── page.tsx           # Landing page
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   └── ...               # Feature components
+├── lib/                   # Utilities and services
+│   ├── claude/           # AI integration
+│   ├── document-generator/
+│   ├── google/           # Drive API client
+│   └── supabase/         # Database clients
+├── hooks/                 # React hooks
+└── types/                 # TypeScript definitions
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Sign Up/Login** - Create an account or sign in with Google
+2. **Upload Documents** - Go to My Documents and upload your curriculum materials
+3. **Generate** - From the Dashboard, select week number and options, then generate
+4. **Export** - Download files or save directly to Google Drive
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/documents` | GET/POST/DELETE | Manage uploaded documents |
+| `/api/generate` | POST | Generate lesson plans |
+| `/api/generated-files` | GET/DELETE/PATCH | Manage generated files |
+| `/api/drive/save` | POST | Save files to Google Drive |
+| `/api/drive/folders` | GET | List Drive folders |
+
+## Deployment
+
+This app is configured for deployment on Vercel:
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+## License
+
+MIT
