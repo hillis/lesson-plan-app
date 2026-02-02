@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 
 interface Folder {
   id: string
@@ -24,6 +25,9 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedName, setSelectedName] = useState<string>('My Drive')
+  const [isCreating, setIsCreating] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const fetchFolders = async (parentId?: string) => {
     setIsLoading(true)
@@ -80,6 +84,39 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
     setIsOpen(false)
   }
 
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return
+
+    setCreateError(null)
+    try {
+      const response = await fetch('/api/drive/folders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newFolderName.trim(),
+          parentId: currentFolder,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create folder')
+      }
+
+      const newFolder = await response.json()
+
+      // Add to folder list and auto-select by navigating into it
+      setFolders([newFolder, ...folders])
+      navigateToFolder(newFolder)
+
+      // Reset creation state
+      setIsCreating(false)
+      setNewFolderName('')
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create folder')
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -109,6 +146,51 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
             </span>
           ))}
         </div>
+
+        {/* New Folder creation */}
+        {isCreating ? (
+          <div className="flex gap-2 mb-3">
+            <Input
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Folder name"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateFolder()
+                if (e.key === 'Escape') {
+                  setIsCreating(false)
+                  setNewFolderName('')
+                  setCreateError(null)
+                }
+              }}
+            />
+            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+              Create
+            </Button>
+            <Button variant="outline" onClick={() => {
+              setIsCreating(false)
+              setNewFolderName('')
+              setCreateError(null)
+            }}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => setIsCreating(true)}
+            className="w-full justify-start mb-3"
+            disabled={!!error}
+          >
+            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Folder
+          </Button>
+        )}
+        {createError && (
+          <p className="text-red-600 text-sm mb-3">{createError}</p>
+        )}
 
         {/* Folder list */}
         <div className="border rounded-lg max-h-64 overflow-y-auto">
