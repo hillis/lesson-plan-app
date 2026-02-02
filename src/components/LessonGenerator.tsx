@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DriveFilePicker } from './DriveFilePicker'
 import { GenerationProgress } from './GenerationProgress'
+import { TemplatePanel } from './TemplatePanel'
 import { useToast } from '@/hooks/use-toast'
+import type { Template } from '@/types/database'
 
 interface LessonGeneratorProps {
   hasSyllabus: boolean
@@ -16,6 +18,7 @@ interface LessonGeneratorProps {
 }
 
 export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorProps) {
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default-cte')
   const [weekNumber, setWeekNumber] = useState('')
   const [daysCount, setDaysCount] = useState<4 | 5>(5)
   const [includeHandouts, setIncludeHandouts] = useState(true)
@@ -142,6 +145,15 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
         <CardTitle>Lesson Plan Settings</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Template Selection */}
+        <div className="space-y-2">
+          <Label>Lesson Plan Template</Label>
+          <TemplatePanel
+            selectedId={selectedTemplateId}
+            onSelect={(template: Template) => setSelectedTemplateId(template.id)}
+          />
+        </div>
+
         {/* Week Number */}
         <div className="space-y-2">
           <Label htmlFor="week">Week Number</Label>
