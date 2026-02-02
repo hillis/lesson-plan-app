@@ -16,14 +16,14 @@ export default async function HistoryPage() {
     <div className="container mx-auto py-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Generation History</h1>
-        <p className="text-gray-500 mb-8">
+        <p className="text-muted-foreground mb-8">
           View and access your previously generated lesson plans
         </p>
 
         {!generations || generations.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-gray-500 mb-4">No lesson plans generated yet.</p>
+              <p className="text-muted-foreground mb-4">No lesson plans generated yet.</p>
               <Link
                 href="/dashboard"
                 className="text-blue-600 hover:underline"
@@ -46,7 +46,7 @@ export default async function HistoryPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {new Date(gen.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -69,7 +69,7 @@ export default async function HistoryPage() {
                     </div>
                   </div>
                   {gen.error_message && (
-                    <p className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
+                    <p className="mt-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
                       {gen.error_message}
                     </p>
                   )}
@@ -85,14 +85,14 @@ export default async function HistoryPage() {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    generating: 'bg-blue-100 text-blue-800',
-    completed: 'bg-green-100 text-green-800',
-    failed: 'bg-red-100 text-red-800',
+    pending: 'bg-warning/10 text-warning-foreground',
+    generating: 'bg-info/10 text-info-foreground',
+    completed: 'bg-success/10 text-success-foreground',
+    failed: 'bg-destructive/10 text-destructive',
   }
 
   return (
-    <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status] || 'bg-gray-100'}`}>
+    <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status] || 'bg-muted'}`}>
       {status}
     </span>
   )

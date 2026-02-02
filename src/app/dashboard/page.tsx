@@ -18,13 +18,13 @@ export default async function DashboardPage() {
     <div className="container mx-auto py-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Generate Lesson Plans</h1>
-        <p className="text-gray-500 mb-8">
+        <p className="text-muted-foreground mb-8">
           Create personalized CTE-format lesson plans based on your curriculum
         </p>
 
         {!hasSyllabus && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800">
+          <div className="mb-6 p-4 bg-warning/10 border border-warning/30 rounded-lg">
+            <p className="text-warning-foreground">
               <strong>Tip:</strong> Upload your syllabus in{' '}
               <a href="/dashboard/documents" className="underline">
                 My Documents

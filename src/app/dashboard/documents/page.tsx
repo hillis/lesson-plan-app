@@ -153,7 +153,7 @@ export default function DocumentsPage() {
     <div className="container mx-auto py-8 space-y-8">
       <div>
         <h1 className="text-3xl font-bold">My Documents</h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-muted-foreground mt-1">
           Upload your course materials to personalize lesson generation
         </p>
       </div>
@@ -174,9 +174,9 @@ export default function DocumentsPage() {
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <p className="text-gray-500">Loading...</p>
+                  <p className="text-muted-foreground">Loading...</p>
                 ) : documents.length === 0 ? (
-                  <p className="text-gray-500">No documents uploaded yet</p>
+                  <p className="text-muted-foreground">No documents uploaded yet</p>
                 ) : (
                   <>
                     {/* Bulk actions bar */}
@@ -187,7 +187,7 @@ export default function DocumentsPage() {
                           onCheckedChange={toggleSelectAll}
                           aria-label="Select all documents"
                         />
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                           {selectedIds.size > 0
                             ? `${selectedIds.size} selected`
                             : 'Select all'}
@@ -209,7 +209,7 @@ export default function DocumentsPage() {
                       {documents.map((doc) => (
                         <li
                           key={doc.id}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                          className="flex items-center gap-3 p-3 bg-muted rounded-lg"
                         >
                           <Checkbox
                             checked={selectedIds.has(doc.id)}
@@ -218,7 +218,7 @@ export default function DocumentsPage() {
                           />
                           <div className="flex-1">
                             <p className="font-medium">{doc.name}</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                               {TYPE_LABELS[doc.type]} &bull;{' '}
                               {new Date(doc.created_at).toLocaleDateString()}
                             </p>
@@ -280,7 +280,7 @@ export default function DocumentsPage() {
             </CardHeader>
             <CardContent>
               {isLoadingGenerated ? (
-                <p className="text-gray-500">Loading...</p>
+                <p className="text-muted-foreground">Loading...</p>
               ) : (
                 <GeneratedFilesList
                   files={generatedFiles}
