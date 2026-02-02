@@ -139,7 +139,7 @@ export function GeneratedFilesList({
   if (files.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 mb-4">No generated files yet</p>
+        <p className="text-muted-foreground mb-4">No generated files yet</p>
         <Button asChild>
           <Link href="/dashboard/generate">Generate Lesson Plans</Link>
         </Button>
@@ -159,8 +159,8 @@ export function GeneratedFilesList({
 
       {/* Bulk actions bar when files are selected */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg mb-4">
-          <span className="text-sm text-gray-600">
+        <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg mb-4">
+          <span className="text-sm text-muted-foreground">
             {selectedIds.size} file{selectedIds.size !== 1 ? 's' : ''} selected
           </span>
           <Button
@@ -187,7 +187,7 @@ export function GeneratedFilesList({
           open={openWeeks.has(group.weekNumber)}
           onOpenChange={() => toggleWeek(group.weekNumber)}
         >
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted rounded-lg hover:bg-muted/80">
             <span className="font-medium">
               Week {group.weekNumber} ({group.files.length} file{group.files.length !== 1 ? 's' : ''})
               {group.dateRange && ` \u2022 ${group.dateRange}`}
@@ -214,7 +214,7 @@ export function GeneratedFilesList({
             {group.files.map(file => (
               <div
                 key={file.id}
-                className="flex items-center gap-3 p-3 bg-white rounded border"
+                className="flex items-center gap-3 p-3 bg-card rounded border"
               >
                 <Checkbox
                   checked={selectedIds.has(file.id)}
@@ -225,7 +225,7 @@ export function GeneratedFilesList({
                   <p className="font-medium truncate">{file.name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <TypeBadge type={file.file_type} />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(file.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -250,7 +250,7 @@ export function GeneratedFilesList({
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="z-[100] bg-white border shadow-lg">
+                    <DropdownMenuContent align="end" className="z-[100] bg-card border shadow-lg">
                       <DropdownMenuItem onClick={() => openRenameDialog(file)} className="cursor-pointer">
                         <Pencil className="h-4 w-4 mr-2" />
                         Rename

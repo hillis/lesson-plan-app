@@ -148,13 +148,13 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
         </DialogHeader>
 
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1 text-sm text-gray-500 flex-wrap">
+        <div className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
           {folderPath.map((item, index) => (
             <span key={index} className="flex items-center">
               {index > 0 && <span className="mx-1">/</span>}
               <button
                 onClick={() => navigateBack(index)}
-                className="hover:text-gray-900 hover:underline"
+                className="hover:text-foreground hover:underline"
               >
                 {item.name}
               </button>
@@ -210,7 +210,7 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
         {/* Folder list */}
         <div className="border rounded-lg max-h-64 overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-gray-500">Loading...</div>
+            <div className="p-4 text-center text-muted-foreground">Loading...</div>
           ) : error ? (
             <div className="p-4 text-center">
               <p className="text-red-600 text-sm mb-2">{error}</p>
@@ -222,16 +222,16 @@ export function DriveFilePicker({ onSelect, selectedFolderId }: DriveFilePickerP
               </a>
             </div>
           ) : folders.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">No subfolders</div>
+            <div className="p-4 text-center text-muted-foreground">No subfolders</div>
           ) : (
             <ul className="divide-y">
               {folders.map((folder) => (
                 <li key={folder.id}>
                   <button
                     onClick={() => navigateToFolder(folder)}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
+                    className="w-full px-4 py-2 text-left hover:bg-muted flex items-center"
                   >
-                    <svg className="mr-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="mr-2 h-4 w-4 text-muted-foreground/70" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                     </svg>
                     {folder.name}
