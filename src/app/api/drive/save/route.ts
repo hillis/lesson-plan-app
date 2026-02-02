@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  const { generation_id, files: providedFiles, folder_name, lesson_plan, week_number, folder_id } = body
+  const { generation_id, files: providedFiles, folder_name, lesson_plan, week_number, folder_id, template_id } = body
 
   // Generate documents from lesson_plan if provided, otherwise use provided files
   let files: Array<{ name: string; content: string; mimeType: string }>
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   if (lesson_plan) {
     // Generate DOCX files from the lesson plan
-    generatedFilesForStorage = await generateAllDocuments(lesson_plan as LessonPlanInput)
+    generatedFilesForStorage = await generateAllDocuments(lesson_plan as LessonPlanInput, template_id)
     files = generatedFilesForStorage.map(file => ({
       name: file.name,
       content: file.content.toString('base64'),
