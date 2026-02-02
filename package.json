@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "docx": "^9.5.1",
     "docx-pdf-converter": "^1.2.2",
+    "docx-templates": "^4.15.0",
     "file-saver": "^2.0.5",
     "googleapis": "^171.0.0",
     "jszip": "^3.10.1",
