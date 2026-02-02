@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  const { generation_id, files: providedFiles, folder_name, lesson_plan, week_number } = body
+  const { generation_id, files: providedFiles, folder_name, lesson_plan, week_number, folder_id } = body
 
   // Generate documents from lesson_plan if provided, otherwise use provided files
   let files: Array<{ name: string; content: string; mimeType: string }>
@@ -110,11 +110,16 @@ export async function POST(request: Request) {
       teacher.google_drive_token.refresh_token
     )
 
+    // Use client-provided folder_id, fall back to database, then undefined (root)
+    const parentFolderId = folder_id && folder_id !== 'root'
+      ? folder_id
+      : (teacher.google_drive_folder_id || undefined)
+
     // Create folder for this generation
     const folder = await createFolder(
       drive,
       folder_name || `Week ${new Date().toISOString().slice(0, 10)}`,
-      teacher.google_drive_folder_id || undefined
+      parentFolderId
     )
 
     // Upload each file to Drive
