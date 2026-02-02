@@ -141,3 +141,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Theme transitions */
+html {
+  transition: background-color 0.2s ease-out, color 0.2s ease-out;
+}
+
+/* Dark mode typography adjustments */
+.dark body {
+  font-weight: 420; /* Slightly heavier for dark backgrounds */
+  letter-spacing: 0.01em;
+}
+
+.dark p,
+.dark li,
+.dark span {
+  line-height: 1.6;
+}
