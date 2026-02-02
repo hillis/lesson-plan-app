@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export default async function DashboardLayout({
   children,
@@ -15,9 +16,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Navigation */}
-      <nav className="bg-white border-b">
+      <nav className="bg-card border-b">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-8">
@@ -27,28 +28,29 @@ export default async function DashboardLayout({
               <div className="flex gap-4">
                 <Link
                   href="/dashboard"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   Generate
                 </Link>
                 <Link
                   href="/dashboard/documents"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   My Documents
                 </Link>
                 <Link
                   href="/dashboard/history"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   History
                 </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500">{user.email}</span>
+              <ModeToggle />
+              <span className="text-sm text-muted-foreground">{user.email}</span>
               <form action="/api/auth/signout" method="post">
-                <button className="text-sm text-gray-600 hover:text-gray-900">
+                <button className="text-sm text-muted-foreground hover:text-foreground">
                   Sign Out
                 </button>
               </form>
