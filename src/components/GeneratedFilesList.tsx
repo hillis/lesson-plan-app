@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { TypeBadge } from '@/components/TypeBadge'
 import { RenameDialog } from '@/components/RenameDialog'
+import { downloadAllGeneratedFiles } from '@/lib/download'
 import { cn } from '@/lib/utils'
 import { ChevronDown, Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { GeneratedFile } from '@/types/database'
@@ -177,6 +178,19 @@ export function GeneratedFilesList({
           >
             <Download className="h-4 w-4 mr-2" />
             Download {selectedIds.size} files
+          </Button>
+        </div>
+      )}
+
+      {/* Download All button - always visible when files exist */}
+      {files.length > 1 && (
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="outline"
+            onClick={() => downloadAllGeneratedFiles(files.map(f => f.id))}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download All ({files.length} files)
           </Button>
         </div>
       )}
