@@ -23,7 +23,7 @@ export function GenerationProgress({ status, message }: GenerationProgressProps)
   return (
     <div className="space-y-2">
       <Progress value={info.progress} />
-      <p className={`text-sm ${status === 'error' ? 'text-red-600' : 'text-gray-500'}`}>
+      <p className={`text-sm ${status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
         {message || info.label}
       </p>
     </div>

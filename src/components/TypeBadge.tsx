@@ -1,10 +1,10 @@
 import type { FileType } from '@/types/database'
 
 const TYPE_STYLES: Record<FileType, string> = {
-  CTE: 'bg-blue-100 text-blue-800',
-  Teacher: 'bg-purple-100 text-purple-800',
-  Student: 'bg-green-100 text-green-800',
-  Presentation: 'bg-orange-100 text-orange-800',
+  CTE: 'bg-primary/10 text-primary dark:bg-primary/20',
+  Teacher: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  Student: 'bg-success/10 text-success',
+  Presentation: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
 }
 
 export function TypeBadge({ type }: { type: FileType }) {

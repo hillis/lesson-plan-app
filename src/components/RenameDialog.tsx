@@ -62,7 +62,7 @@ export function RenameDialog({ open, onOpenChange, currentName, onRename }: Rena
                 placeholder="File name"
                 autoFocus
               />
-              <span className="text-gray-500">.{extension}</span>
+              <span className="text-muted-foreground">.{extension}</span>
             </div>
           </div>
           <DialogFooter>
