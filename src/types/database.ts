@@ -16,6 +16,16 @@ export interface GeneratedFile {
   created_at: string              // ISO timestamp
 }
 
+export interface Template {
+  id: string
+  teacher_id: string | null  // null for default templates
+  name: string
+  file_path: string
+  file_size: number | null
+  is_default: boolean
+  created_at: string
+}
+
 export interface Document {
   id: string
   teacher_id: string
