@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -33,6 +33,30 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
   } | null>(null)
 
   const { toast } = useToast()
+
+  // Load saved folder preference on mount
+  useEffect(() => {
+    const loadFolderPreference = async () => {
+      try {
+        const response = await fetch('/api/teacher/folder-preference')
+        if (response.ok) {
+          const { folder_id } = await response.json()
+          if (folder_id) {
+            setDriveFolderId(folder_id)
+            // Note: We don't have the folder name from the API, so we show a generic label
+            // The DriveFilePicker will show the correct name when opened
+            setDriveFolderName('Saved folder')
+          }
+          // If folder_id is null, keep defaults ('root' and 'My Drive')
+        }
+      } catch (error) {
+        // Silently fail - will use default My Drive
+        console.error('Failed to load folder preference:', error)
+      }
+    }
+
+    loadFolderPreference()
+  }, [])
 
   const handleGenerate = async () => {
     if (!weekNumber || isNaN(parseInt(weekNumber))) {
