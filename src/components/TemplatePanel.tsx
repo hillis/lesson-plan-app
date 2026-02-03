@@ -51,15 +51,10 @@ export function TemplatePanel({ selectedId, onSelect }: TemplatePanelProps) {
       }
     } catch (error) {
       console.error('Failed to fetch templates:', error)
-      toast({
-        title: 'Error loading templates',
-        description: 'Could not load template list',
-        variant: 'destructive',
-      })
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
