@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { DocumentUploader } from '@/components/DocumentUploader'
 import { GeneratedFilesList } from '@/components/GeneratedFilesList'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -20,7 +19,7 @@ import {
   downloadGeneratedFilesBulk,
   type DownloadFormat
 } from '@/lib/download'
-import { Download, ChevronDown } from 'lucide-react'
+import { Download, ChevronDown, FileText, Trash2 } from 'lucide-react'
 import type { Document, GeneratedFile } from '@/types/database'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -150,93 +149,116 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">My Documents</h1>
-        <p className="text-muted-foreground mt-1">
-          Upload your course materials to personalize lesson generation
+    <div className="max-w-6xl mx-auto py-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold tracking-tight">My Documents</h1>
+        <p className="text-muted-foreground text-lg">
+          Manage your course materials and generated lesson plans
         </p>
       </div>
 
-      <Tabs defaultValue="uploaded" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="uploaded">Uploaded</TabsTrigger>
-          <TabsTrigger value="generated">Generated</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="uploaded" className="space-y-6">
+        <div className="glass-card p-1 rounded-xl inline-flex">
+          <TabsList className="bg-transparent border-0 p-0 h-auto gap-2">
+            <TabsTrigger
+              value="uploaded"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
+            >
+              Uploaded Materials
+            </TabsTrigger>
+            <TabsTrigger
+              value="generated"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
+            >
+              Generated Plans
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="uploaded">
-          <div className="grid md:grid-cols-2 gap-8">
-            <DocumentUploader onUploadComplete={handleUploadComplete} />
+        <TabsContent value="uploaded" className="space-y-6 mt-0">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <DocumentUploader onUploadComplete={handleUploadComplete} />
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Uploaded Documents</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="lg:col-span-2 glass-card rounded-xl p-6 h-fit">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold">Files Library</h2>
+                  <p className="text-sm text-muted-foreground">Your uploaded curriculum files</p>
+                </div>
+                {documents.length > 0 && selectedIds.size > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkDownload}
+                    className="bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Selected ({selectedIds.size})
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-4">
                 {isLoading ? (
-                  <p className="text-muted-foreground">Loading...</p>
+                  <div className="flex items-center justify-center p-12 text-muted-foreground">
+                    <div className="animate-pulse flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-white/10" />
+                      <span>Loading files...</span>
+                    </div>
+                  </div>
                 ) : documents.length === 0 ? (
-                  <p className="text-muted-foreground">No documents uploaded yet</p>
+                  <div className="text-center p-12 border border-dashed border-white/10 rounded-xl bg-white/5">
+                    <FileText className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+                    <p className="text-muted-foreground font-medium">No documents uploaded yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Upload a syllabus or standards file to get started</p>
+                  </div>
                 ) : (
                   <>
-                    {/* Bulk actions bar */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={selectedIds.size === documents.length && documents.length > 0}
-                          onCheckedChange={toggleSelectAll}
-                          aria-label="Select all documents"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {selectedIds.size > 0
-                            ? `${selectedIds.size} selected`
-                            : 'Select all'}
-                        </span>
-                      </div>
-                      {selectedIds.size > 0 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleBulkDownload}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download {selectedIds.size} files
-                        </Button>
-                      )}
+                    <div className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground border-b border-white/5">
+                      <Checkbox
+                        checked={selectedIds.size === documents.length && documents.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Select all documents"
+                      />
+                      <span>Select All</span>
                     </div>
 
-                    <ul className="space-y-3">
+                    <ul className="space-y-2">
                       {documents.map((doc) => (
                         <li
                           key={doc.id}
-                          className="flex items-center gap-3 p-3 bg-muted rounded-lg"
+                          className="group flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5"
                         >
                           <Checkbox
                             checked={selectedIds.has(doc.id)}
                             onCheckedChange={() => toggleSelection(doc.id)}
                             aria-label={`Select ${doc.name}`}
                           />
-                          <div className="flex-1">
-                            <p className="font-medium">{doc.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {TYPE_LABELS[doc.type]} &bull;{' '}
-                              {new Date(doc.created_at).toLocaleDateString()}
-                            </p>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate text-foreground/90">{doc.name}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                              <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/70 uppercase text-[10px] font-bold tracking-wider">
+                                {TYPE_LABELS[doc.type] || 'DOC'}
+                              </span>
+                              <span>&bull;</span>
+                              <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                             {isDocx(doc.mime_type) ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
                                     variant="ghost"
-                                    size="sm"
-                                    aria-label={`Download ${doc.name}`}
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-white/10"
                                   >
                                     <Download className="h-4 w-4" />
-                                    <ChevronDown className="h-3 w-3 ml-1" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                                <DropdownMenuContent align="end" className="glass-card border-white/10">
                                   <DropdownMenuItem onClick={() => handleDownload(doc, 'original')}>
                                     Download as DOCX
                                   </DropdownMenuItem>
@@ -248,19 +270,20 @@ export default function DocumentsPage() {
                             ) : (
                               <Button
                                 variant="ghost"
-                                size="sm"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-white/10"
                                 onClick={() => handleDownload(doc, 'original')}
-                                aria-label={`Download ${doc.name}`}
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
                             )}
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size="icon"
+                              className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
                               onClick={() => handleDelete(doc.id)}
                             >
-                              Delete
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </li>
@@ -268,34 +291,40 @@ export default function DocumentsPage() {
                     </ul>
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="generated">
-          <Card>
-            <CardHeader>
-              <CardTitle>Generated Lesson Plans</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingGenerated ? (
-                <p className="text-muted-foreground">Loading...</p>
-              ) : (
-                <GeneratedFilesList
-                  files={generatedFiles}
-                  selectedIds={selectedGeneratedIds}
-                  onSelectionChange={setSelectedGeneratedIds}
-                  onDownload={handleDownloadGenerated}
-                  onBulkDownload={handleBulkDownloadGenerated}
-                  onDelete={handleDeleteGenerated}
-                  onRename={handleRenameGenerated}
-                />
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="generated" className="mt-0">
+          <div className="glass-card rounded-xl p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold">Generated Lesson Plans</h2>
+              <p className="text-sm text-muted-foreground">All your AI-generated materials</p>
+            </div>
+
+            {isLoadingGenerated ? (
+              <div className="flex items-center justify-center p-12 text-muted-foreground">
+                <div className="animate-pulse flex flex-col items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-white/10" />
+                  <span>Loading generated files...</span>
+                </div>
+              </div>
+            ) : (
+              <GeneratedFilesList
+                files={generatedFiles}
+                selectedIds={selectedGeneratedIds}
+                onSelectionChange={setSelectedGeneratedIds}
+                onDownload={handleDownloadGenerated}
+                onBulkDownload={handleBulkDownloadGenerated}
+                onDelete={handleDeleteGenerated}
+                onRename={handleRenameGenerated}
+              />
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
   )
 }
+
