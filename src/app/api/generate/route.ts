@@ -15,6 +15,8 @@ export async function POST(request: Request) {
   const {
     weekNumber,
     selectedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+    selectedModel = 'sonnet',
+    enableThinking = false,
     classDuration = 90,
     includeHandouts = true,
     includePresentations = false,
@@ -68,6 +70,8 @@ export async function POST(request: Request) {
       {
         weekNumber,
         selectedDays,
+        selectedModel,
+        enableThinking,
         classDuration,
         includeHandouts,
         includePresentations,

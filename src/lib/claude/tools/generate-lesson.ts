@@ -33,6 +33,8 @@ export async function executeGenerateLesson(params: {
   unit_name: string
   topics: string[]
   selected_days: string[]
+  model?: 'sonnet' | 'opus'
+  enable_thinking?: boolean
   class_duration: number
   standards_text?: string
   include_handouts?: boolean
@@ -125,13 +127,40 @@ IMPORTANT:
 ${params.include_handouts ? '- Generate 1-3 student handouts that support the week\'s lessons (guides, worksheets, reference sheets)' : ''}
 - Return ONLY valid JSON, no other text`
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 8192,
-    messages: [{ role: 'user', content: prompt }],
-  })
+  // Model mapping
+  const modelMap: Record<string, string> = {
+    'sonnet': 'claude-sonnet-4-20250514',
+    'opus': 'claude-opus-4-20250514',
+  }
+  const selectedModel = modelMap[params.model || 'sonnet']
+  const useThinking = params.model === 'opus' && params.enable_thinking
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  // Build request options
+  const requestOptions: Anthropic.MessageCreateParams = {
+    model: selectedModel,
+    max_tokens: useThinking ? 16000 : 8192,
+    messages: [{ role: 'user', content: prompt }],
+  }
+
+  // Add extended thinking if enabled (Opus only)
+  if (useThinking) {
+    requestOptions.thinking = {
+      type: 'enabled',
+      budget_tokens: 10000,
+    }
+  }
+
+  const response = await client.messages.create(requestOptions)
+
+  // Extract text from response (handle both regular and thinking responses)
+  let text = ''
+  for (const block of response.content) {
+    if (block.type === 'text') {
+      text = block.text
+      break
+    }
+  }
+
   const jsonMatch = text.match(/\{[\s\S]*\}/)
   if (!jsonMatch) throw new Error('Failed to generate lesson plan')
 

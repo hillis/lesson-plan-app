@@ -6,6 +6,8 @@ import type { LessonPlanInput } from '@/types/lesson'
 export interface GenerationRequest {
   weekNumber: number
   selectedDays: string[]
+  selectedModel: 'sonnet' | 'opus'
+  enableThinking: boolean
   classDuration: number
   includeHandouts: boolean
   includePresentations: boolean
@@ -51,6 +53,8 @@ export async function generateLessonPlanWithAgent(
     unit_name: weekInfo.unit,
     topics: weekInfo.topics,
     selected_days: request.selectedDays,
+    model: request.selectedModel,
+    enable_thinking: request.enableThinking,
     class_duration: request.classDuration,
     standards_text: standardsText,
     include_handouts: request.includeHandouts,

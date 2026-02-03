@@ -21,6 +21,8 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default-cte')
   const [weekNumber, setWeekNumber] = useState('')
   const [selectedDays, setSelectedDays] = useState<string[]>(['Mon', 'Tue', 'Wed', 'Thu', 'Fri'])
+  const [selectedModel, setSelectedModel] = useState<'sonnet' | 'opus'>('sonnet')
+  const [enableThinking, setEnableThinking] = useState(false)
   const [includeHandouts, setIncludeHandouts] = useState(true)
   const [includePresentations, setIncludePresentations] = useState(false)
   const [customInstructions, setCustomInstructions] = useState('')
@@ -105,6 +107,8 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
         body: JSON.stringify({
           weekNumber: parseInt(weekNumber),
           selectedDays,
+          selectedModel,
+          enableThinking: selectedModel === 'opus' ? enableThinking : false,
           classDuration: 90,
           includeHandouts,
           includePresentations,
@@ -211,6 +215,51 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
               </Button>
             ))}
           </div>
+        </div>
+
+        {/* Model Selection */}
+        <div className="space-y-2">
+          <Label>AI Model</Label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={selectedModel === 'sonnet' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setSelectedModel('sonnet')
+                setEnableThinking(false)
+              }}
+              className={cn(
+                'flex-1',
+                selectedModel === 'sonnet' && 'ring-2 ring-primary ring-offset-2'
+              )}
+            >
+              Sonnet 4 (Faster)
+            </Button>
+            <Button
+              type="button"
+              variant={selectedModel === 'opus' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedModel('opus')}
+              className={cn(
+                'flex-1',
+                selectedModel === 'opus' && 'ring-2 ring-primary ring-offset-2'
+              )}
+            >
+              Opus 4 (Higher Quality)
+            </Button>
+          </div>
+          {selectedModel === 'opus' && (
+            <label className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={enableThinking}
+                onChange={(e) => setEnableThinking(e.target.checked)}
+                className="rounded"
+              />
+              <span>Enable Extended Thinking (better reasoning, slower)</span>
+            </label>
+          )}
         </div>
 
         {/* Options */}
