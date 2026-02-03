@@ -1,103 +1,43 @@
+/**
+ * Teacher Handout Generator
+ *
+ * Generates a Canva-quality teacher handout document for the entire week.
+ * Uses shared styles and components for consistency and maintainability.
+ */
+
 import {
   Document,
   Paragraph,
   Table,
-  TableRow,
-  TableCell,
   TextRun,
-  WidthType,
-  AlignmentType,
-  BorderStyle,
-  ShadingType,
-  convertInchesToTwip,
-  HeightRule,
   PageBreak,
-  TableLayoutType,
-  LevelFormat,
-  VerticalAlign,
 } from 'docx'
-import type { LessonPlanInput, DayPlan } from '@/types/lesson'
+import type { LessonPlanInput } from '@/types/lesson'
+import {
+  COLORS,
+  FONT_SIZES,
+  TEACHER_WIDTHS,
+  getDocumentStyles,
+  getNumberingConfig,
+  PAGE_MARGINS,
+} from './handout-styles'
+import {
+  bodyText,
+  headingText,
+  sectionHeader,
+  contentBox,
+  noteBox,
+  numberedBadgeList,
+  cardGrid,
+  checklistGrid,
+  threeColumnCards,
+  scheduleTable,
+  teacherHeaderBanner,
+  dayHeaderBanner,
+} from './handout-components'
 
-// Color constants matching CTE Lesson skill design
-const COLORS = {
-  NAVY_BLUE: '1A3C6E',
-  DARK_GRAY: '333333',
-  MEDIUM_GRAY: '666666',
-  LIGHT_BLUE: 'D6E3F8',
-  LIGHT_GRAY: 'F5F5F5',
-  ACCENT_BLUE: '4A90D9',
-  CREAM_YELLOW: 'FFF9E6',
-  SOFT_GREEN: 'E8F5E9',
-  WHITE: 'FFFFFF',
-}
-
-// Borders applied to cells, not tables (per docx skill)
-const noBorder = {
-  top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-  bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-  left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-  right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-}
-
-const thinBorder = {
-  top: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-  bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-  left: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-  right: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-}
-
-// Table margins for consistent cell padding
-const tableMargins = { top: 100, bottom: 100, left: 180, right: 180 }
-
-// Page width constants
-const PAGE_WIDTH = convertInchesToTwip(7.1)
-const ACCENT_BAR_WIDTH = convertInchesToTwip(0.08)
-const CONTENT_WIDTH = convertInchesToTwip(7.02)
-
-/**
- * Creates a section header with left accent bar sidebar
- */
-function createSectionHeader(text: string, level: 1 | 2 = 1): Table {
-  const fontSize = level === 1 ? 32 : 26 // 16pt or 13pt
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [ACCENT_BAR_WIDTH, CONTENT_WIDTH],
-    margins: tableMargins,
-    rows: [
-      new TableRow({
-        children: [
-          // Accent bar
-          new TableCell({
-            width: { size: ACCENT_BAR_WIDTH, type: WidthType.DXA },
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: noBorder,
-            children: [new Paragraph({})],
-          }),
-          // Content cell
-          new TableCell({
-            width: { size: CONTENT_WIDTH, type: WidthType.DXA },
-            borders: noBorder,
-            children: [
-              new Paragraph({
-                spacing: { before: level === 1 ? 80 : 40, after: level === 1 ? 80 : 40 },
-                children: [
-                  new TextRun({
-                    text,
-                    bold: true,
-                    size: fontSize,
-                    color: COLORS.NAVY_BLUE,
-                    font: 'Arial',
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      }),
-    ],
-  })
-}
+const NUMBERING_REF = 'teacher-bullet-list'
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
 /**
  * Generates a Canva-quality teacher handout document for the entire week
@@ -107,268 +47,52 @@ export async function generateTeacherHandout(
   weekNumber: number
 ): Promise<Buffer> {
   const children: (Paragraph | Table)[] = []
-  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
-  // === HEADER BANNER with accent bar ===
-  const headerTable = new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [PAGE_WIDTH],
-    margins: tableMargins,
-    rows: [
-      // Accent bar (thin top bar)
-      new TableRow({
-        height: { value: 100, rule: HeightRule.EXACT },
-        children: [
-          new TableCell({
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: noBorder,
-            children: [new Paragraph({})],
-          }),
-        ],
-      }),
-      // Main header cell
-      new TableRow({
-        children: [
-          new TableCell({
-            shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-            borders: noBorder,
-            children: [
-              // Week number badge
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 40 },
-                children: [
-                  new TextRun({
-                    text: `WEEK ${weekNumber}`,
-                    bold: true,
-                    size: 22,
-                    color: COLORS.LIGHT_BLUE,
-                    font: 'Arial',
-                  }),
-                ],
-              }),
-              // Unit title
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 80, after: 80 },
-                children: [
-                  new TextRun({
-                    text: lessonPlan.unit,
-                    bold: true,
-                    size: 56, // 28pt
-                    color: COLORS.WHITE,
-                    font: 'Arial',
-                  }),
-                ],
-              }),
-              // Subtitle
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 160 },
-                children: [
-                  new TextRun({
-                    text: 'Media Foundations \u00B7 Teacher Guide',
-                    size: 22,
-                    color: COLORS.LIGHT_BLUE,
-                    font: 'Arial',
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      }),
-    ],
-  })
-  children.push(headerTable)
+  // === HEADER BANNER ===
+  children.push(teacherHeaderBanner(weekNumber, lessonPlan.unit))
   children.push(new Paragraph({}))
 
   // === WEEK OVERVIEW BOX ===
   if (lessonPlan.week_overview || lessonPlan.week_focus) {
-    children.push(createSectionHeader('Week Overview', 1))
+    children.push(sectionHeader('Week Overview'))
 
-    const overviewChildren: Paragraph[] = []
+    const overviewParagraphs: Paragraph[] = []
 
     if (lessonPlan.week_focus) {
-      overviewChildren.push(
+      overviewParagraphs.push(
         new Paragraph({
           spacing: { after: 160 },
           children: [
-            new TextRun({
-              text: 'Focus: ',
-              bold: true,
-              size: 24,
-              color: COLORS.NAVY_BLUE,
-              font: 'Arial',
-            }),
-            new TextRun({
-              text: lessonPlan.week_focus,
-              size: 22,
-              color: COLORS.DARK_GRAY,
-              font: 'Arial',
-            }),
+            headingText('Focus: ', { size: FONT_SIZES.BADGE }),
+            bodyText(lessonPlan.week_focus),
           ],
         })
       )
     }
 
     if (lessonPlan.week_overview) {
-      overviewChildren.push(
+      overviewParagraphs.push(
         new Paragraph({
-          children: [
-            new TextRun({
-              text: lessonPlan.week_overview,
-              size: 22,
-              color: COLORS.DARK_GRAY,
-              font: 'Arial',
-            }),
-          ],
+          children: [bodyText(lessonPlan.week_overview)],
         })
       )
     }
 
-    const overviewTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [PAGE_WIDTH],
-      margins: tableMargins,
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: PAGE_WIDTH, type: WidthType.DXA },
-              shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: overviewChildren,
-            }),
-          ],
-        }),
-      ],
-    })
-    children.push(overviewTable)
+    children.push(contentBox(overviewParagraphs, { width: TEACHER_WIDTHS.PAGE }))
     children.push(new Paragraph({}))
   }
 
   // === WEEKLY LEARNING OBJECTIVES ===
   if (lessonPlan.week_objectives && lessonPlan.week_objectives.length > 0) {
-    children.push(createSectionHeader('Weekly Learning Objectives', 1))
-
-    const objRows = lessonPlan.week_objectives.map(
-      (obj, idx) =>
-        new TableRow({
-          children: [
-            // Number badge cell
-            new TableCell({
-              width: { size: convertInchesToTwip(0.4), type: WidthType.DXA },
-              shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              verticalAlign: VerticalAlign.CENTER,
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [
-                    new TextRun({
-                      text: String(idx + 1),
-                      bold: true,
-                      size: 22,
-                      color: COLORS.WHITE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            // Objective text cell
-            new TableCell({
-              borders: thinBorder,
-              children: [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: obj,
-                      size: 22,
-                      color: COLORS.DARK_GRAY,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        })
-    )
-
-    const objBadgeWidth = convertInchesToTwip(0.4)
-    const objTextWidth = convertInchesToTwip(6.7)
-    const objTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [objBadgeWidth, objTextWidth],
-      margins: tableMargins,
-      rows: objRows,
-    })
-    children.push(objTable)
+    children.push(sectionHeader('Weekly Learning Objectives'))
+    children.push(numberedBadgeList(lessonPlan.week_objectives))
     children.push(new Paragraph({}))
   }
 
   // === MATERIALS NEEDED FOR THE WEEK ===
   if (lessonPlan.week_materials && lessonPlan.week_materials.length > 0) {
-    children.push(createSectionHeader('Materials Needed for the Week', 1))
-
-    const matRows: TableRow[] = []
-    const materials = lessonPlan.week_materials
-
-    for (let i = 0; i < materials.length; i += 2) {
-      const rowCells: TableCell[] = []
-
-      for (let j = 0; j < 2; j++) {
-        if (i + j < materials.length) {
-          rowCells.push(
-            new TableCell({
-              width: { size: convertInchesToTwip(3.4), type: WidthType.DXA },
-              shading: {
-                fill: Math.floor(i / 2) % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
-                type: ShadingType.CLEAR,
-              },
-              borders: thinBorder,
-              children: [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: `[ ] ${materials[i + j]}`,
-                      size: 22,
-                      color: COLORS.DARK_GRAY,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            })
-          )
-        } else {
-          rowCells.push(
-            new TableCell({
-              width: { size: convertInchesToTwip(3.4), type: WidthType.DXA },
-              borders: noBorder,
-              children: [new Paragraph({})],
-            })
-          )
-        }
-      }
-
-      matRows.push(new TableRow({ children: rowCells }))
-    }
-
-    const matColWidth = convertInchesToTwip(3.55)
-    const matTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [matColWidth, matColWidth],
-      margins: tableMargins,
-      rows: matRows,
-    })
-    children.push(matTable)
+    children.push(sectionHeader('Materials Needed for the Week'))
+    children.push(checklistGrid(lessonPlan.week_materials))
     children.push(new Paragraph({}))
   }
 
@@ -378,56 +102,14 @@ export async function generateTeacherHandout(
     lessonPlan.summative_assessment ||
     lessonPlan.weekly_deliverable
   ) {
-    children.push(createSectionHeader('Assessment Overview', 1))
-
-    const assessments = [
-      { key: 'formative_assessment', label: 'Formative', color: COLORS.LIGHT_BLUE },
-      { key: 'summative_assessment', label: 'Summative', color: COLORS.SOFT_GREEN },
-      { key: 'weekly_deliverable', label: 'Deliverable', color: COLORS.CREAM_YELLOW },
-    ]
-
-    const assessCells = assessments.map(({ key, label, color }) => {
-      const value = lessonPlan[key as keyof LessonPlanInput] as string | undefined
-      return new TableCell({
-        width: { size: convertInchesToTwip(2.2), type: WidthType.DXA },
-        shading: { fill: color, type: ShadingType.CLEAR },
-        borders: thinBorder,
-        children: [
-          new Paragraph({
-            spacing: { after: 120 },
-            children: [
-              new TextRun({
-                text: label,
-                bold: true,
-                size: 22,
-                color: COLORS.NAVY_BLUE,
-                font: 'Arial',
-              }),
-            ],
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: value || 'N/A',
-                size: 20,
-                color: COLORS.DARK_GRAY,
-                font: 'Arial',
-              }),
-            ],
-          }),
-        ],
-      })
-    })
-
-    const assessColWidth = convertInchesToTwip(2.37)
-    const assessTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [assessColWidth, assessColWidth, assessColWidth],
-      margins: tableMargins,
-      rows: [new TableRow({ children: assessCells })],
-    })
-    children.push(assessTable)
+    children.push(sectionHeader('Assessment Overview'))
+    children.push(
+      threeColumnCards([
+        { label: 'Formative', content: lessonPlan.formative_assessment || '', color: COLORS.LIGHT_BLUE },
+        { label: 'Summative', content: lessonPlan.summative_assessment || '', color: COLORS.SOFT_GREEN },
+        { label: 'Deliverable', content: lessonPlan.weekly_deliverable || '', color: COLORS.CREAM_YELLOW },
+      ])
+    )
     children.push(new Paragraph({}))
   }
 
@@ -436,129 +118,39 @@ export async function generateTeacherHandout(
 
   for (let i = 0; i < days.length; i++) {
     const day = days[i]
-    const dayName = day.day_label || dayNames[i] || `Day ${i + 1}`
+    const dayName = day.day_label || DAY_NAMES[i] || `Day ${i + 1}`
 
     // Page break before each day (except first)
     if (i > 0) {
       children.push(new Paragraph({ children: [new PageBreak()] }))
     }
 
-    // Day header - Tab-style banner with topic
-    const dayTabWidth = convertInchesToTwip(1.2)
-    const dayTopicWidth = convertInchesToTwip(5.9)
-    const dayHeaderTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [dayTabWidth, dayTopicWidth],
-      margins: tableMargins,
-      rows: [
-        new TableRow({
-          children: [
-            // Day number "tab"
-            new TableCell({
-              width: { size: dayTabWidth, type: WidthType.DXA },
-              shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              verticalAlign: VerticalAlign.CENTER,
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [
-                    new TextRun({
-                      text: `DAY ${i + 1}`,
-                      bold: true,
-                      size: 28,
-                      color: COLORS.WHITE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [
-                    new TextRun({
-                      text: dayName,
-                      size: 20,
-                      color: COLORS.WHITE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            // Topic bar
-            new TableCell({
-              width: { size: dayTopicWidth, type: WidthType.DXA },
-              shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              verticalAlign: VerticalAlign.CENTER,
-              children: [
-                new Paragraph({
-                  spacing: { before: 160, after: 160 },
-                  children: [
-                    new TextRun({
-                      text: day.topic || 'Untitled',
-                      bold: true,
-                      size: 36,
-                      color: COLORS.WHITE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      ],
-    })
-    children.push(dayHeaderTable)
+    // Day header banner
+    children.push(dayHeaderBanner(i + 1, dayName, day.topic))
     children.push(new Paragraph({}))
 
     // Learning Objectives
     if (day.objectives && day.objectives.length > 0) {
-      children.push(createSectionHeader('Learning Objectives', 2))
+      children.push(sectionHeader('Learning Objectives', { level: 2 }))
 
-      const objBox = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.FIXED,
-        columnWidths: [PAGE_WIDTH],
-        margins: tableMargins,
-        rows: [
-          new TableRow({
-            children: [
-              new TableCell({
-                width: { size: PAGE_WIDTH, type: WidthType.DXA },
-                shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
-                borders: thinBorder,
-                children: day.objectives.map(
-                  (obj, idx) =>
-                    new Paragraph({
-                      numbering: { reference: 'teacher-bullet-list', level: 0 },
-                      spacing: idx === 0 ? {} : { before: 40 },
-                      children: [
-                        new TextRun({
-                          text: obj,
-                          size: 20,
-                          color: COLORS.DARK_GRAY,
-                          font: 'Arial',
-                        }),
-                      ],
-                    })
-                ),
-              }),
-            ],
-          }),
-        ],
-      })
-      children.push(objBox)
+      const objParagraphs = day.objectives.map(
+        (obj, idx) =>
+          new Paragraph({
+            numbering: { reference: NUMBERING_REF, level: 0 },
+            spacing: idx === 0 ? {} : { before: 40 },
+            children: [bodyText(obj, { size: FONT_SIZES.BODY_SMALL })],
+          })
+      )
+
+      children.push(contentBox(objParagraphs, { width: TEACHER_WIDTHS.PAGE }))
     }
 
     // Materials
     if (day.day_materials && day.day_materials.length > 0) {
-      children.push(createSectionHeader('Materials', 2))
+      children.push(sectionHeader('Materials', { level: 2 }))
       children.push(
         new Paragraph({
-          children: day.day_materials.map((mat, idx) => {
+          children: day.day_materials.flatMap((mat, idx) => {
             const parts: TextRun[] = []
             if (idx > 0) {
               parts.push(
@@ -569,332 +161,53 @@ export async function generateTeacherHandout(
                 })
               )
             }
-            parts.push(
-              new TextRun({
-                text: mat,
-                size: 22,
-                color: COLORS.DARK_GRAY,
-                font: 'Arial',
-              })
-            )
+            parts.push(bodyText(mat))
             return parts
-          }).flat(),
+          }),
         })
       )
     }
 
     // Schedule
     if (day.schedule && day.schedule.length > 0) {
-      children.push(createSectionHeader('Schedule', 2))
-
-      const scheduleRows = [
-        // Header row
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: convertInchesToTwip(0.8), type: WidthType.DXA },
-              shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [
-                    new TextRun({
-                      text: 'Time',
-                      bold: true,
-                      size: 22,
-                      color: COLORS.WHITE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            new TableCell({
-              width: { size: convertInchesToTwip(1.5), type: WidthType.DXA },
-              shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: 'Activity',
-                      bold: true,
-                      size: 22,
-                      color: COLORS.WHITE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            new TableCell({
-              shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: 'Description',
-                      bold: true,
-                      size: 22,
-                      color: COLORS.WHITE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-        // Data rows
-        ...day.schedule.map(
-          (item, idx) =>
-            new TableRow({
-              children: [
-                new TableCell({
-                  width: { size: convertInchesToTwip(0.8), type: WidthType.DXA },
-                  shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
-                  borders: thinBorder,
-                  children: [
-                    new Paragraph({
-                      alignment: AlignmentType.CENTER,
-                      children: [
-                        new TextRun({
-                          text: item.time,
-                          bold: true,
-                          size: 20,
-                          color: COLORS.NAVY_BLUE,
-                          font: 'Arial',
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-                new TableCell({
-                  width: { size: convertInchesToTwip(1.5), type: WidthType.DXA },
-                  shading: {
-                    fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
-                    type: ShadingType.CLEAR,
-                  },
-                  borders: thinBorder,
-                  children: [
-                    new Paragraph({
-                      children: [
-                        new TextRun({
-                          text: item.name,
-                          bold: true,
-                          size: 20,
-                          color: COLORS.DARK_GRAY,
-                          font: 'Arial',
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-                new TableCell({
-                  shading: {
-                    fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
-                    type: ShadingType.CLEAR,
-                  },
-                  borders: thinBorder,
-                  children: [
-                    new Paragraph({
-                      children: [
-                        new TextRun({
-                          text: item.description,
-                          size: 20,
-                          color: COLORS.DARK_GRAY,
-                          font: 'Arial',
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-              ],
-            })
-        ),
-      ]
-
-      const schedTimeWidth = convertInchesToTwip(0.8)
-      const schedActivityWidth = convertInchesToTwip(1.5)
-      const schedDescWidth = convertInchesToTwip(4.8)
-      const scheduleTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.FIXED,
-        columnWidths: [schedTimeWidth, schedActivityWidth, schedDescWidth],
-        margins: tableMargins,
-        rows: scheduleRows,
-      })
-      children.push(scheduleTable)
+      children.push(sectionHeader('Schedule', { level: 2 }))
+      children.push(scheduleTable(day.schedule))
     }
 
     // Vocabulary
     if (day.vocabulary && Object.keys(day.vocabulary).length > 0) {
-      children.push(createSectionHeader('Vocabulary', 2))
+      children.push(sectionHeader('Vocabulary', { level: 2 }))
 
-      const vocabItems = Object.entries(day.vocabulary)
-      const vocabRows: TableRow[] = []
+      const vocabItems = Object.entries(day.vocabulary).map(([term, definition]) => ({
+        term,
+        definition,
+      }))
 
-      for (let v = 0; v < vocabItems.length; v += 2) {
-        const rowCells: TableCell[] = []
-        for (let j = 0; j < 2; j++) {
-          if (v + j < vocabItems.length) {
-            const [term, definition] = vocabItems[v + j]
-            const cardBg = Math.floor(v / 2) % 2 === 0 ? COLORS.LIGHT_BLUE : COLORS.LIGHT_GRAY
-            rowCells.push(
-              new TableCell({
-                width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
-                shading: { fill: cardBg, type: ShadingType.CLEAR },
-                borders: thinBorder,
-                children: [
-                  new Paragraph({
-                    spacing: { after: 80 },
-                    children: [
-                      new TextRun({
-                        text: term,
-                        bold: true,
-                        size: 22,
-                        color: COLORS.NAVY_BLUE,
-                        font: 'Arial',
-                      }),
-                    ],
-                  }),
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: definition,
-                        size: 20,
-                        color: COLORS.DARK_GRAY,
-                        font: 'Arial',
-                      }),
-                    ],
-                  }),
-                ],
-              })
-            )
-          } else {
-            rowCells.push(
-              new TableCell({
-                width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
-                borders: noBorder,
-                children: [new Paragraph({})],
-              })
-            )
-          }
-        }
-        vocabRows.push(new TableRow({ children: rowCells }))
-      }
-
-      const vocabColWidth = convertInchesToTwip(3.55)
-      const vocabTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.FIXED,
-        columnWidths: [vocabColWidth, vocabColWidth],
-        margins: tableMargins,
-        rows: vocabRows,
-      })
-      children.push(vocabTable)
+      children.push(cardGrid(vocabItems))
     }
 
     // Differentiation
     if (day.differentiation) {
-      children.push(createSectionHeader('Differentiation', 2))
-
-      const diffLevels = [
-        { key: 'Advanced', label: 'Advanced Learners', color: COLORS.LIGHT_BLUE },
-        { key: 'Struggling', label: 'Struggling Learners', color: COLORS.CREAM_YELLOW },
-        { key: 'ELL', label: 'ELL Students', color: COLORS.SOFT_GREEN },
-      ]
-
-      const diffCells = diffLevels.map(({ key, label, color }) => {
-        const value = day.differentiation[key as keyof typeof day.differentiation]
-        return new TableCell({
-          width: { size: convertInchesToTwip(2.2), type: WidthType.DXA },
-          shading: { fill: color, type: ShadingType.CLEAR },
-          borders: thinBorder,
-          children: [
-            new Paragraph({
-              spacing: { after: 80 },
-              children: [
-                new TextRun({
-                  text: label,
-                  bold: true,
-                  size: 20,
-                  color: COLORS.NAVY_BLUE,
-                  font: 'Arial',
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: value || 'N/A',
-                  size: 18,
-                  color: COLORS.DARK_GRAY,
-                  font: 'Arial',
-                }),
-              ],
-            }),
-          ],
-        })
-      })
-
-      const diffColWidth = convertInchesToTwip(2.37)
-      const diffTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.FIXED,
-        columnWidths: [diffColWidth, diffColWidth, diffColWidth],
-        margins: tableMargins,
-        rows: [new TableRow({ children: diffCells })],
-      })
-      children.push(diffTable)
+      children.push(sectionHeader('Differentiation', { level: 2 }))
+      children.push(
+        threeColumnCards([
+          { label: 'Advanced Learners', content: day.differentiation.Advanced || '', color: COLORS.LIGHT_BLUE },
+          { label: 'Struggling Learners', content: day.differentiation.Struggling || '', color: COLORS.CREAM_YELLOW },
+          { label: 'ELL Students', content: day.differentiation.ELL || '', color: COLORS.SOFT_GREEN },
+        ])
+      )
     }
 
-    // Teacher Notes
+    // Teacher Notes (day level)
     if (day.teacher_notes) {
-      children.push(createSectionHeader('Teacher Notes', 2))
-
-      const noteAccentWidth = convertInchesToTwip(0.12)
-      const noteContentWidth = convertInchesToTwip(6.98)
-      const notesTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.FIXED,
-        columnWidths: [noteAccentWidth, noteContentWidth],
-        margins: tableMargins,
-        rows: [
-          new TableRow({
-            children: [
-              // Yellow accent bar
-              new TableCell({
-                width: { size: noteAccentWidth, type: WidthType.DXA },
-                shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
-                borders: noBorder,
-                children: [new Paragraph({})],
-              }),
-              // Content cell
-              new TableCell({
-                width: { size: noteContentWidth, type: WidthType.DXA },
-                shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
-                borders: thinBorder,
-                children: [
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: day.teacher_notes,
-                        size: 20,
-                        color: COLORS.DARK_GRAY,
-                        font: 'Arial',
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-            ],
+      children.push(sectionHeader('Teacher Notes', { level: 2 }))
+      children.push(
+        noteBox([
+          new Paragraph({
+            children: [bodyText(day.teacher_notes, { size: FONT_SIZES.BODY_SMALL })],
           }),
-        ],
-      })
-      children.push(notesTable)
+        ])
+      )
     }
 
     children.push(new Paragraph({}))
@@ -903,98 +216,29 @@ export async function generateTeacherHandout(
   // === WEEK-LEVEL TEACHER NOTES ===
   if (lessonPlan.teacher_notes && lessonPlan.teacher_notes.length > 0) {
     children.push(new Paragraph({ children: [new PageBreak()] }))
-    children.push(createSectionHeader('Weekly Teacher Notes', 1))
+    children.push(sectionHeader('Weekly Teacher Notes'))
 
-    const weekNoteAccentWidth = convertInchesToTwip(0.12)
-    const weekNoteContentWidth = convertInchesToTwip(6.98)
-    const weekNotesTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [weekNoteAccentWidth, weekNoteContentWidth],
-      margins: tableMargins,
-      rows: [
-        new TableRow({
-          children: [
-            // Yellow accent bar
-            new TableCell({
-              width: { size: weekNoteAccentWidth, type: WidthType.DXA },
-              shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
-              borders: noBorder,
-              children: [new Paragraph({})],
-            }),
-            // Content cell
-            new TableCell({
-              width: { size: weekNoteContentWidth, type: WidthType.DXA },
-              shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: lessonPlan.teacher_notes.map(
-                (note, idx) =>
-                  new Paragraph({
-                    numbering: { reference: 'teacher-bullet-list', level: 0 },
-                    spacing: idx === 0 ? {} : { before: 80 },
-                    children: [
-                      new TextRun({
-                        text: note,
-                        size: 20,
-                        color: COLORS.DARK_GRAY,
-                        font: 'Arial',
-                      }),
-                    ],
-                  })
-              ),
-            }),
-          ],
-        }),
-      ],
-    })
-    children.push(weekNotesTable)
+    const noteParagraphs = lessonPlan.teacher_notes.map(
+      (note, idx) =>
+        new Paragraph({
+          numbering: { reference: NUMBERING_REF, level: 0 },
+          spacing: idx === 0 ? {} : { before: 80 },
+          children: [bodyText(note, { size: FONT_SIZES.BODY_SMALL })],
+        })
+    )
+
+    children.push(noteBox(noteParagraphs))
   }
 
   // Create the document
   const doc = new Document({
-    numbering: {
-      config: [
-        {
-          reference: 'teacher-bullet-list',
-          levels: [
-            {
-              level: 0,
-              format: LevelFormat.BULLET,
-              text: '\u2022',
-              alignment: AlignmentType.LEFT,
-              style: {
-                paragraph: {
-                  indent: { left: 720, hanging: 360 },
-                },
-              },
-            },
-          ],
-        },
-      ],
-    },
-    styles: {
-      default: {
-        document: {
-          run: {
-            font: 'Arial',
-            size: 22,
-          },
-          paragraph: {
-            spacing: { after: 120, line: 276 },
-          },
-        },
-      },
-    },
+    numbering: getNumberingConfig(NUMBERING_REF),
+    styles: getDocumentStyles(),
     sections: [
       {
         properties: {
           page: {
-            margin: {
-              top: convertInchesToTwip(0.6),
-              bottom: convertInchesToTwip(0.6),
-              left: convertInchesToTwip(0.7),
-              right: convertInchesToTwip(0.7),
-            },
+            margin: PAGE_MARGINS.teacher,
           },
         },
         children,

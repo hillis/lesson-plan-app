@@ -1,100 +1,36 @@
+/**
+ * Student Handout Generator
+ *
+ * Generates a Canva-quality student handout document.
+ * Uses shared styles and components for consistency and maintainability.
+ */
+
 import {
   Document,
   Paragraph,
   Table,
-  TableRow,
-  TableCell,
-  TextRun,
-  WidthType,
-  AlignmentType,
-  BorderStyle,
-  ShadingType,
-  convertInchesToTwip,
-  HeightRule,
-  TableLayoutType,
-  LevelFormat,
-  VerticalAlign,
 } from 'docx'
 import type { StudentHandout } from '@/types/lesson'
+import {
+  FONT_SIZES,
+  STUDENT_WIDTHS,
+  getDocumentStyles,
+  getNumberingConfig,
+  PAGE_MARGINS,
+} from './handout-styles'
+import {
+  bodyText,
+  sectionHeader,
+  contentBox,
+  noteBox,
+  numberedBadgeList,
+  cardGrid,
+  questionBlock,
+  writingLines,
+  studentHeaderBanner,
+} from './handout-components'
 
-// Color constants matching CTE Lesson skill design
-const COLORS = {
-  NAVY_BLUE: '1A3C6E',
-  DARK_GRAY: '333333',
-  MEDIUM_GRAY: '666666',
-  LIGHT_BLUE: 'D6E3F8',
-  LIGHT_GRAY: 'F8F9FA',
-  ACCENT_BLUE: '4A90D9',
-  CREAM_YELLOW: 'FFF9E6',
-  SOFT_GREEN: 'E8F5E9',
-  WHITE: 'FFFFFF',
-  LINE_GRAY: 'DDDDDD',
-}
-
-// Borders applied to cells, not tables (per docx skill)
-const noBorder = {
-  top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-  bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-  left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-  right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-}
-
-const thinBorder = {
-  top: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-  bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-  left: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-  right: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-}
-
-// Table margins for consistent cell padding
-const tableMargins = { top: 100, bottom: 100, left: 180, right: 180 }
-
-/**
- * Creates a section header with left accent bar sidebar
- */
-function createSectionHeader(text: string): Table {
-  const accentWidth = convertInchesToTwip(0.08)
-  const contentWidth = convertInchesToTwip(6.82)
-
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [accentWidth, contentWidth],
-    margins: tableMargins,
-    rows: [
-      new TableRow({
-        children: [
-          // Accent bar
-          new TableCell({
-            width: { size: accentWidth, type: WidthType.DXA },
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: noBorder,
-            children: [new Paragraph({})],
-          }),
-          // Content cell
-          new TableCell({
-            width: { size: contentWidth, type: WidthType.DXA },
-            borders: noBorder,
-            children: [
-              new Paragraph({
-                spacing: { before: 80, after: 80 },
-                children: [
-                  new TextRun({
-                    text,
-                    bold: true,
-                    size: 30, // 15pt
-                    color: COLORS.NAVY_BLUE,
-                    font: 'Arial',
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      }),
-    ],
-  })
-}
+const NUMBERING_REF = 'student-bullet-list'
 
 /**
  * Generates a Canva-quality student handout document
@@ -105,126 +41,43 @@ export async function generateStudentHandout(
 ): Promise<Buffer> {
   const children: (Paragraph | Table)[] = []
 
-  // === HEADER BANNER with accent bar ===
-  const fullWidth = convertInchesToTwip(6.9)
-  const headerTable = new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [fullWidth],
-    margins: tableMargins,
-    rows: [
-      // Accent bar (thin top bar)
-      new TableRow({
-        height: { value: 100, rule: HeightRule.EXACT },
-        children: [
-          new TableCell({
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: noBorder,
-            children: [new Paragraph({})],
-          }),
-        ],
-      }),
-      // Main header cell
-      new TableRow({
-        children: [
-          new TableCell({
-            shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-            borders: noBorder,
-            children: [
-              // Title
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 160, after: 80 },
-                children: [
-                  new TextRun({
-                    text: handout.title || 'Student Handout',
-                    bold: true,
-                    size: 48, // 24pt
-                    color: COLORS.WHITE,
-                    font: 'Arial',
-                  }),
-                ],
-              }),
-              // Subtitle
-              ...(handout.subtitle
-                ? [
-                    new Paragraph({
-                      alignment: AlignmentType.CENTER,
-                      spacing: { after: 160 },
-                      children: [
-                        new TextRun({
-                          text: handout.subtitle,
-                          size: 24, // 12pt
-                          color: COLORS.LIGHT_BLUE,
-                          font: 'Arial',
-                        }),
-                      ],
-                    }),
-                  ]
-                : []),
-            ],
-          }),
-        ],
-      }),
-    ],
-  })
-  children.push(headerTable)
-  children.push(new Paragraph({})) // Spacing
+  // === HEADER BANNER ===
+  children.push(studentHeaderBanner(handout.title, handout.subtitle))
+  children.push(new Paragraph({}))
 
   // === INSTRUCTIONS BOX ===
   if (handout.instructions) {
-    children.push(createSectionHeader('Instructions'))
+    children.push(
+      sectionHeader('Instructions', {
+        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
+        contentWidth: STUDENT_WIDTHS.CONTENT,
+      })
+    )
 
-    const instructionsTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [fullWidth],
-      margins: tableMargins,
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: fullWidth, type: WidthType.DXA },
-              shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: handout.instructions,
-                      size: 22, // 11pt
-                      color: COLORS.DARK_GRAY,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      ],
-    })
-    children.push(instructionsTable)
+    children.push(
+      contentBox(
+        [new Paragraph({ children: [bodyText(handout.instructions)] })],
+        { width: STUDENT_WIDTHS.PAGE }
+      )
+    )
     children.push(new Paragraph({}))
   }
 
   // === MAIN CONTENT SECTIONS ===
   for (const section of handout.sections || []) {
-    children.push(createSectionHeader(section.heading || 'Content'))
+    children.push(
+      sectionHeader(section.heading || 'Content', {
+        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
+        contentWidth: STUDENT_WIDTHS.CONTENT,
+      })
+    )
 
     // Content text
     if (section.content) {
       children.push(
         new Paragraph({
           spacing: { after: 200 },
-          children: [
-            new TextRun({
-              text: section.content,
-              size: 22,
-              color: COLORS.DARK_GRAY,
-              font: 'Arial',
-            }),
-          ],
+          children: [bodyText(section.content)],
         })
       )
     }
@@ -232,78 +85,21 @@ export async function generateStudentHandout(
     // Items (numbered or bulleted)
     if (section.items && section.items.length > 0) {
       if (section.numbered) {
-        // Numbered items with circular badges
-        const badgeWidth = convertInchesToTwip(0.45)
-        const itemContentWidth = convertInchesToTwip(6.45)
-        const itemsTable = new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          layout: TableLayoutType.FIXED,
-          columnWidths: [badgeWidth, itemContentWidth],
-          margins: tableMargins,
-          rows: section.items.map((item, idx) =>
-            new TableRow({
-              children: [
-                // Number badge cell
-                new TableCell({
-                  width: { size: badgeWidth, type: WidthType.DXA },
-                  shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-                  borders: thinBorder,
-                  verticalAlign: VerticalAlign.CENTER,
-                  children: [
-                    new Paragraph({
-                      alignment: AlignmentType.CENTER,
-                      children: [
-                        new TextRun({
-                          text: String(idx + 1),
-                          bold: true,
-                          size: 24,
-                          color: COLORS.WHITE,
-                          font: 'Arial',
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-                // Content cell
-                new TableCell({
-                  width: { size: itemContentWidth, type: WidthType.DXA },
-                  shading: {
-                    fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
-                    type: ShadingType.CLEAR,
-                  },
-                  borders: thinBorder,
-                  children: [
-                    new Paragraph({
-                      children: [
-                        new TextRun({
-                          text: item,
-                          size: 22,
-                          color: COLORS.DARK_GRAY,
-                          font: 'Arial',
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-              ],
-            })
-          ),
-        })
-        children.push(itemsTable)
+        // Numbered items with badges
+        children.push(
+          numberedBadgeList(section.items, {
+            badgeWidth: STUDENT_WIDTHS.BADGE,
+            contentWidth: STUDENT_WIDTHS.BADGE_CONTENT,
+            alternateRows: true,
+          })
+        )
       } else {
-        // Bulleted items - use proper Word numbering
+        // Bulleted items
         for (const item of section.items) {
           children.push(
             new Paragraph({
-              numbering: { reference: 'student-bullet-list', level: 0 },
-              children: [
-                new TextRun({
-                  text: item,
-                  size: 22,
-                  color: COLORS.DARK_GRAY,
-                  font: 'Arial',
-                }),
-              ],
+              numbering: { reference: NUMBERING_REF, level: 0 },
+              children: [bodyText(item)],
             })
           )
         }
@@ -313,20 +109,7 @@ export async function generateStudentHandout(
     // Blank lines for writing
     if (section.blank_lines && section.blank_lines > 0) {
       children.push(new Paragraph({}))
-      for (let i = 0; i < section.blank_lines; i++) {
-        children.push(
-          new Paragraph({
-            spacing: { after: 280 },
-            children: [
-              new TextRun({
-                text: '_'.repeat(85),
-                color: COLORS.LINE_GRAY,
-                font: 'Arial',
-              }),
-            ],
-          })
-        )
-      }
+      children.push(...writingLines(section.blank_lines))
     }
 
     children.push(new Paragraph({}))
@@ -334,260 +117,72 @@ export async function generateStudentHandout(
 
   // === QUESTIONS SECTION ===
   if (handout.questions && handout.questions.length > 0) {
-    children.push(createSectionHeader('Questions'))
+    children.push(
+      sectionHeader('Questions', {
+        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
+        contentWidth: STUDENT_WIDTHS.CONTENT,
+      })
+    )
 
     for (let i = 0; i < handout.questions.length; i++) {
-      const question = handout.questions[i]
-
-      const qBadgeWidth = convertInchesToTwip(0.5)
-      const qContentWidth = convertInchesToTwip(6.4)
-      const questionTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.FIXED,
-        columnWidths: [qBadgeWidth, qContentWidth],
-        margins: tableMargins,
-        rows: [
-          new TableRow({
-            children: [
-              // Question number badge
-              new TableCell({
-                width: { size: qBadgeWidth, type: WidthType.DXA },
-                shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-                borders: thinBorder,
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                      new TextRun({
-                        text: String(i + 1),
-                        bold: true,
-                        size: 28,
-                        color: COLORS.WHITE,
-                        font: 'Arial',
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              // Question and answer area
-              new TableCell({
-                width: { size: qContentWidth, type: WidthType.DXA },
-                shading: {
-                  fill: i % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
-                  type: ShadingType.CLEAR,
-                },
-                borders: thinBorder,
-                children: [
-                  // Question text
-                  new Paragraph({
-                    spacing: { after: 200 },
-                    children: [
-                      new TextRun({
-                        text: question,
-                        size: 22,
-                        color: COLORS.DARK_GRAY,
-                        font: 'Arial',
-                      }),
-                    ],
-                  }),
-                  // Answer lines
-                  ...Array(3)
-                    .fill(null)
-                    .map(
-                      () =>
-                        new Paragraph({
-                          spacing: { after: 160 },
-                          children: [
-                            new TextRun({
-                              text: '_'.repeat(80),
-                              color: COLORS.LINE_GRAY,
-                              font: 'Arial',
-                            }),
-                          ],
-                        })
-                    ),
-                ],
-              }),
-            ],
-          }),
-        ],
-      })
-      children.push(questionTable)
+      children.push(questionBlock(handout.questions[i], i))
       children.push(new Paragraph({}))
     }
   }
 
   // === VOCABULARY SECTION ===
   if (handout.vocabulary && Object.keys(handout.vocabulary).length > 0) {
-    children.push(createSectionHeader('Vocabulary'))
+    children.push(
+      sectionHeader('Vocabulary', {
+        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
+        contentWidth: STUDENT_WIDTHS.CONTENT,
+      })
+    )
 
-    const vocabItems = Object.entries(handout.vocabulary)
-    const vocabRows: TableRow[] = []
+    const vocabItems = Object.entries(handout.vocabulary).map(([term, definition]) => ({
+      term,
+      definition,
+    }))
 
-    // Create vocabulary cards in two columns
-    for (let i = 0; i < vocabItems.length; i += 2) {
-      const rowCells: TableCell[] = []
-
-      for (let j = 0; j < 2; j++) {
-        if (i + j < vocabItems.length) {
-          const [term, definition] = vocabItems[i + j]
-          const cardBg = Math.floor(i / 2) % 2 === 0 ? COLORS.LIGHT_BLUE : COLORS.LIGHT_GRAY
-
-          rowCells.push(
-            new TableCell({
-              width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
-              shading: { fill: cardBg, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: [
-                // Term (bold, navy)
-                new Paragraph({
-                  spacing: { after: 80 },
-                  children: [
-                    new TextRun({
-                      text: term,
-                      bold: true,
-                      size: 22,
-                      color: COLORS.NAVY_BLUE,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-                // Definition
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: definition,
-                      size: 20,
-                      color: COLORS.DARK_GRAY,
-                      font: 'Arial',
-                    }),
-                  ],
-                }),
-              ],
-            })
-          )
-        } else {
-          // Empty cell for odd number of items
-          rowCells.push(
-            new TableCell({
-              width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
-              borders: noBorder,
-              children: [new Paragraph({})],
-            })
-          )
-        }
-      }
-
-      vocabRows.push(new TableRow({ children: rowCells }))
-    }
-
-    const vocabColWidth = convertInchesToTwip(3.45)
-    const vocabTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [vocabColWidth, vocabColWidth],
-      margins: tableMargins,
-      rows: vocabRows,
-    })
-    children.push(vocabTable)
+    children.push(cardGrid(vocabItems, { cardWidth: STUDENT_WIDTHS.VOCAB_CARD }))
     children.push(new Paragraph({}))
   }
 
   // === TIPS/NOTES SECTION ===
   if (handout.tips && handout.tips.length > 0) {
-    children.push(createSectionHeader('Tips & Notes'))
+    children.push(
+      sectionHeader('Tips & Notes', {
+        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
+        contentWidth: STUDENT_WIDTHS.CONTENT,
+      })
+    )
 
-    const tipAccentWidth = convertInchesToTwip(0.12)
-    const tipContentWidth = convertInchesToTwip(6.78)
-    const tipsTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-      columnWidths: [tipAccentWidth, tipContentWidth],
-      margins: tableMargins,
-      rows: [
-        new TableRow({
-          children: [
-            // Yellow accent bar
-            new TableCell({
-              width: { size: tipAccentWidth, type: WidthType.DXA },
-              shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
-              borders: noBorder,
-              children: [new Paragraph({})],
-            }),
-            // Content cell
-            new TableCell({
-              width: { size: tipContentWidth, type: WidthType.DXA },
-              shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
-              borders: thinBorder,
-              children: handout.tips.map(
-                (tip, idx) =>
-                  new Paragraph({
-                    numbering: { reference: 'student-bullet-list', level: 0 },
-                    spacing: idx === 0 ? {} : { before: 80 },
-                    children: [
-                      new TextRun({
-                        text: tip,
-                        size: 20,
-                        color: COLORS.DARK_GRAY,
-                        font: 'Arial',
-                      }),
-                    ],
-                  })
-              ),
-            }),
-          ],
-        }),
-      ],
-    })
-    children.push(tipsTable)
+    const tipParagraphs = handout.tips.map(
+      (tip, idx) =>
+        new Paragraph({
+          numbering: { reference: NUMBERING_REF, level: 0 },
+          spacing: idx === 0 ? {} : { before: 80 },
+          children: [bodyText(tip, { size: FONT_SIZES.BODY_SMALL })],
+        })
+    )
+
+    children.push(
+      noteBox(tipParagraphs, {
+        accentWidth: STUDENT_WIDTHS.TIP_ACCENT,
+        contentWidth: STUDENT_WIDTHS.TIP_CONTENT,
+      })
+    )
   }
 
   // Create the document
   const doc = new Document({
-    numbering: {
-      config: [
-        {
-          reference: 'student-bullet-list',
-          levels: [
-            {
-              level: 0,
-              format: LevelFormat.BULLET,
-              text: '\u2022',
-              alignment: AlignmentType.LEFT,
-              style: {
-                paragraph: {
-                  indent: { left: 720, hanging: 360 },
-                },
-              },
-            },
-          ],
-        },
-      ],
-    },
-    styles: {
-      default: {
-        document: {
-          run: {
-            font: 'Arial',
-            size: 22, // 11pt
-          },
-          paragraph: {
-            spacing: { after: 120, line: 276 }, // 1.15 line spacing
-          },
-        },
-      },
-    },
+    numbering: getNumberingConfig(NUMBERING_REF),
+    styles: getDocumentStyles(),
     sections: [
       {
         properties: {
           page: {
-            margin: {
-              top: convertInchesToTwip(0.7),
-              bottom: convertInchesToTwip(0.7),
-              left: convertInchesToTwip(0.8),
-              right: convertInchesToTwip(0.8),
-            },
+            margin: PAGE_MARGINS.student,
           },
         },
         children,
