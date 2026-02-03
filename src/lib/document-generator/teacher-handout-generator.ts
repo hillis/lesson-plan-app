@@ -14,6 +14,7 @@ import {
   PageBreak,
   TableLayoutType,
   LevelFormat,
+  VerticalAlign,
 } from 'docx'
 import type { LessonPlanInput, DayPlan } from '@/types/lesson'
 
@@ -30,6 +31,7 @@ const COLORS = {
   WHITE: 'FFFFFF',
 }
 
+// Borders applied to cells, not tables (per docx skill)
 const noBorder = {
   top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
   bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
@@ -43,6 +45,9 @@ const thinBorder = {
   left: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
   right: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
 }
+
+// Table margins for consistent cell padding
+const tableMargins = { top: 100, bottom: 100, left: 180, right: 180 }
 
 // Page width constants
 const PAGE_WIDTH = convertInchesToTwip(7.1)
@@ -58,7 +63,7 @@ function createSectionHeader(text: string, level: 1 | 2 = 1): Table {
     width: { size: 100, type: WidthType.PERCENTAGE },
     layout: TableLayoutType.FIXED,
     columnWidths: [ACCENT_BAR_WIDTH, CONTENT_WIDTH],
-    borders: noBorder,
+    margins: tableMargins,
     rows: [
       new TableRow({
         children: [
@@ -82,7 +87,7 @@ function createSectionHeader(text: string, level: 1 | 2 = 1): Table {
                     bold: true,
                     size: fontSize,
                     color: COLORS.NAVY_BLUE,
-                    font: 'Cambria',
+                    font: 'Arial',
                   }),
                 ],
               }),
@@ -109,7 +114,7 @@ export async function generateTeacherHandout(
     width: { size: 100, type: WidthType.PERCENTAGE },
     layout: TableLayoutType.FIXED,
     columnWidths: [PAGE_WIDTH],
-    borders: thinBorder,
+    margins: tableMargins,
     rows: [
       // Accent bar (thin top bar)
       new TableRow({
@@ -139,7 +144,7 @@ export async function generateTeacherHandout(
                     bold: true,
                     size: 22,
                     color: COLORS.LIGHT_BLUE,
-                    font: 'Calibri',
+                    font: 'Arial',
                   }),
                 ],
               }),
@@ -153,7 +158,7 @@ export async function generateTeacherHandout(
                     bold: true,
                     size: 56, // 28pt
                     color: COLORS.WHITE,
-                    font: 'Cambria',
+                    font: 'Arial',
                   }),
                 ],
               }),
@@ -166,7 +171,7 @@ export async function generateTeacherHandout(
                     text: 'Media Foundations \u00B7 Teacher Guide',
                     size: 22,
                     color: COLORS.LIGHT_BLUE,
-                    font: 'Calibri',
+                    font: 'Arial',
                   }),
                 ],
               }),
@@ -195,11 +200,13 @@ export async function generateTeacherHandout(
               bold: true,
               size: 24,
               color: COLORS.NAVY_BLUE,
+              font: 'Arial',
             }),
             new TextRun({
               text: lessonPlan.week_focus,
               size: 22,
               color: COLORS.DARK_GRAY,
+              font: 'Arial',
             }),
           ],
         })
@@ -214,6 +221,7 @@ export async function generateTeacherHandout(
               text: lessonPlan.week_overview,
               size: 22,
               color: COLORS.DARK_GRAY,
+              font: 'Arial',
             }),
           ],
         })
@@ -224,13 +232,14 @@ export async function generateTeacherHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [PAGE_WIDTH],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: [
         new TableRow({
           children: [
             new TableCell({
               width: { size: PAGE_WIDTH, type: WidthType.DXA },
               shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: overviewChildren,
             }),
           ],
@@ -253,7 +262,8 @@ export async function generateTeacherHandout(
             new TableCell({
               width: { size: convertInchesToTwip(0.4), type: WidthType.DXA },
               shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-              verticalAlign: 'center',
+              borders: thinBorder,
+              verticalAlign: VerticalAlign.CENTER,
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
@@ -263,6 +273,7 @@ export async function generateTeacherHandout(
                       bold: true,
                       size: 22,
                       color: COLORS.WHITE,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -270,6 +281,7 @@ export async function generateTeacherHandout(
             }),
             // Objective text cell
             new TableCell({
+              borders: thinBorder,
               children: [
                 new Paragraph({
                   children: [
@@ -277,6 +289,7 @@ export async function generateTeacherHandout(
                       text: obj,
                       size: 22,
                       color: COLORS.DARK_GRAY,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -292,7 +305,7 @@ export async function generateTeacherHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [objBadgeWidth, objTextWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: objRows,
     })
     children.push(objTable)
@@ -318,6 +331,7 @@ export async function generateTeacherHandout(
                 fill: Math.floor(i / 2) % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
                 type: ShadingType.CLEAR,
               },
+              borders: thinBorder,
               children: [
                 new Paragraph({
                   children: [
@@ -325,6 +339,7 @@ export async function generateTeacherHandout(
                       text: `[ ] ${materials[i + j]}`,
                       size: 22,
                       color: COLORS.DARK_GRAY,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -336,7 +351,7 @@ export async function generateTeacherHandout(
             new TableCell({
               width: { size: convertInchesToTwip(3.4), type: WidthType.DXA },
               borders: noBorder,
-              children: [new Paragraph({ text: '' })],
+              children: [new Paragraph({})],
             })
           )
         }
@@ -350,7 +365,7 @@ export async function generateTeacherHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [matColWidth, matColWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: matRows,
     })
     children.push(matTable)
@@ -376,6 +391,7 @@ export async function generateTeacherHandout(
       return new TableCell({
         width: { size: convertInchesToTwip(2.2), type: WidthType.DXA },
         shading: { fill: color, type: ShadingType.CLEAR },
+        borders: thinBorder,
         children: [
           new Paragraph({
             spacing: { after: 120 },
@@ -385,6 +401,7 @@ export async function generateTeacherHandout(
                 bold: true,
                 size: 22,
                 color: COLORS.NAVY_BLUE,
+                font: 'Arial',
               }),
             ],
           }),
@@ -394,6 +411,7 @@ export async function generateTeacherHandout(
                 text: value || 'N/A',
                 size: 20,
                 color: COLORS.DARK_GRAY,
+                font: 'Arial',
               }),
             ],
           }),
@@ -406,7 +424,7 @@ export async function generateTeacherHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [assessColWidth, assessColWidth, assessColWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: [new TableRow({ children: assessCells })],
     })
     children.push(assessTable)
@@ -432,7 +450,7 @@ export async function generateTeacherHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [dayTabWidth, dayTopicWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: [
         new TableRow({
           children: [
@@ -440,7 +458,8 @@ export async function generateTeacherHandout(
             new TableCell({
               width: { size: dayTabWidth, type: WidthType.DXA },
               shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-              verticalAlign: 'center',
+              borders: thinBorder,
+              verticalAlign: VerticalAlign.CENTER,
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
@@ -450,7 +469,7 @@ export async function generateTeacherHandout(
                       bold: true,
                       size: 28,
                       color: COLORS.WHITE,
-                      font: 'Cambria',
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -461,6 +480,7 @@ export async function generateTeacherHandout(
                       text: dayName,
                       size: 20,
                       color: COLORS.WHITE,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -470,7 +490,8 @@ export async function generateTeacherHandout(
             new TableCell({
               width: { size: dayTopicWidth, type: WidthType.DXA },
               shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-              verticalAlign: 'center',
+              borders: thinBorder,
+              verticalAlign: VerticalAlign.CENTER,
               children: [
                 new Paragraph({
                   spacing: { before: 160, after: 160 },
@@ -480,7 +501,7 @@ export async function generateTeacherHandout(
                       bold: true,
                       size: 36,
                       color: COLORS.WHITE,
-                      font: 'Cambria',
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -501,13 +522,14 @@ export async function generateTeacherHandout(
         width: { size: 100, type: WidthType.PERCENTAGE },
         layout: TableLayoutType.FIXED,
         columnWidths: [PAGE_WIDTH],
-        borders: thinBorder,
+        margins: tableMargins,
         rows: [
           new TableRow({
             children: [
               new TableCell({
                 width: { size: PAGE_WIDTH, type: WidthType.DXA },
                 shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
+                borders: thinBorder,
                 children: day.objectives.map(
                   (obj, idx) =>
                     new Paragraph({
@@ -518,6 +540,7 @@ export async function generateTeacherHandout(
                           text: obj,
                           size: 20,
                           color: COLORS.DARK_GRAY,
+                          font: 'Arial',
                         }),
                       ],
                     })
@@ -540,8 +563,9 @@ export async function generateTeacherHandout(
             if (idx > 0) {
               parts.push(
                 new TextRun({
-                  text: '  \u2022  ',
+                  text: '  |  ',
                   color: COLORS.MEDIUM_GRAY,
+                  font: 'Arial',
                 })
               )
             }
@@ -550,6 +574,7 @@ export async function generateTeacherHandout(
                 text: mat,
                 size: 22,
                 color: COLORS.DARK_GRAY,
+                font: 'Arial',
               })
             )
             return parts
@@ -569,6 +594,7 @@ export async function generateTeacherHandout(
             new TableCell({
               width: { size: convertInchesToTwip(0.8), type: WidthType.DXA },
               shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
@@ -578,6 +604,7 @@ export async function generateTeacherHandout(
                       bold: true,
                       size: 22,
                       color: COLORS.WHITE,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -586,6 +613,7 @@ export async function generateTeacherHandout(
             new TableCell({
               width: { size: convertInchesToTwip(1.5), type: WidthType.DXA },
               shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: [
                 new Paragraph({
                   children: [
@@ -594,6 +622,7 @@ export async function generateTeacherHandout(
                       bold: true,
                       size: 22,
                       color: COLORS.WHITE,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -601,6 +630,7 @@ export async function generateTeacherHandout(
             }),
             new TableCell({
               shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: [
                 new Paragraph({
                   children: [
@@ -609,6 +639,7 @@ export async function generateTeacherHandout(
                       bold: true,
                       size: 22,
                       color: COLORS.WHITE,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -624,6 +655,7 @@ export async function generateTeacherHandout(
                 new TableCell({
                   width: { size: convertInchesToTwip(0.8), type: WidthType.DXA },
                   shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
+                  borders: thinBorder,
                   children: [
                     new Paragraph({
                       alignment: AlignmentType.CENTER,
@@ -633,6 +665,7 @@ export async function generateTeacherHandout(
                           bold: true,
                           size: 20,
                           color: COLORS.NAVY_BLUE,
+                          font: 'Arial',
                         }),
                       ],
                     }),
@@ -644,6 +677,7 @@ export async function generateTeacherHandout(
                     fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
                     type: ShadingType.CLEAR,
                   },
+                  borders: thinBorder,
                   children: [
                     new Paragraph({
                       children: [
@@ -652,6 +686,7 @@ export async function generateTeacherHandout(
                           bold: true,
                           size: 20,
                           color: COLORS.DARK_GRAY,
+                          font: 'Arial',
                         }),
                       ],
                     }),
@@ -662,6 +697,7 @@ export async function generateTeacherHandout(
                     fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
                     type: ShadingType.CLEAR,
                   },
+                  borders: thinBorder,
                   children: [
                     new Paragraph({
                       children: [
@@ -669,6 +705,7 @@ export async function generateTeacherHandout(
                           text: item.description,
                           size: 20,
                           color: COLORS.DARK_GRAY,
+                          font: 'Arial',
                         }),
                       ],
                     }),
@@ -686,7 +723,7 @@ export async function generateTeacherHandout(
         width: { size: 100, type: WidthType.PERCENTAGE },
         layout: TableLayoutType.FIXED,
         columnWidths: [schedTimeWidth, schedActivityWidth, schedDescWidth],
-        borders: thinBorder,
+        margins: tableMargins,
         rows: scheduleRows,
       })
       children.push(scheduleTable)
@@ -709,6 +746,7 @@ export async function generateTeacherHandout(
               new TableCell({
                 width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
                 shading: { fill: cardBg, type: ShadingType.CLEAR },
+                borders: thinBorder,
                 children: [
                   new Paragraph({
                     spacing: { after: 80 },
@@ -718,6 +756,7 @@ export async function generateTeacherHandout(
                         bold: true,
                         size: 22,
                         color: COLORS.NAVY_BLUE,
+                        font: 'Arial',
                       }),
                     ],
                   }),
@@ -727,6 +766,7 @@ export async function generateTeacherHandout(
                         text: definition,
                         size: 20,
                         color: COLORS.DARK_GRAY,
+                        font: 'Arial',
                       }),
                     ],
                   }),
@@ -738,7 +778,7 @@ export async function generateTeacherHandout(
               new TableCell({
                 width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
                 borders: noBorder,
-                children: [new Paragraph({ text: '' })],
+                children: [new Paragraph({})],
               })
             )
           }
@@ -751,7 +791,7 @@ export async function generateTeacherHandout(
         width: { size: 100, type: WidthType.PERCENTAGE },
         layout: TableLayoutType.FIXED,
         columnWidths: [vocabColWidth, vocabColWidth],
-        borders: thinBorder,
+        margins: tableMargins,
         rows: vocabRows,
       })
       children.push(vocabTable)
@@ -772,6 +812,7 @@ export async function generateTeacherHandout(
         return new TableCell({
           width: { size: convertInchesToTwip(2.2), type: WidthType.DXA },
           shading: { fill: color, type: ShadingType.CLEAR },
+          borders: thinBorder,
           children: [
             new Paragraph({
               spacing: { after: 80 },
@@ -781,6 +822,7 @@ export async function generateTeacherHandout(
                   bold: true,
                   size: 20,
                   color: COLORS.NAVY_BLUE,
+                  font: 'Arial',
                 }),
               ],
             }),
@@ -790,6 +832,7 @@ export async function generateTeacherHandout(
                   text: value || 'N/A',
                   size: 18,
                   color: COLORS.DARK_GRAY,
+                  font: 'Arial',
                 }),
               ],
             }),
@@ -802,7 +845,7 @@ export async function generateTeacherHandout(
         width: { size: 100, type: WidthType.PERCENTAGE },
         layout: TableLayoutType.FIXED,
         columnWidths: [diffColWidth, diffColWidth, diffColWidth],
-        borders: thinBorder,
+        margins: tableMargins,
         rows: [new TableRow({ children: diffCells })],
       })
       children.push(diffTable)
@@ -818,7 +861,7 @@ export async function generateTeacherHandout(
         width: { size: 100, type: WidthType.PERCENTAGE },
         layout: TableLayoutType.FIXED,
         columnWidths: [noteAccentWidth, noteContentWidth],
-        borders: thinBorder,
+        margins: tableMargins,
         rows: [
           new TableRow({
             children: [
@@ -827,12 +870,13 @@ export async function generateTeacherHandout(
                 width: { size: noteAccentWidth, type: WidthType.DXA },
                 shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
                 borders: noBorder,
-                children: [new Paragraph({ text: '' })],
+                children: [new Paragraph({})],
               }),
               // Content cell
               new TableCell({
                 width: { size: noteContentWidth, type: WidthType.DXA },
                 shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
+                borders: thinBorder,
                 children: [
                   new Paragraph({
                     children: [
@@ -840,6 +884,7 @@ export async function generateTeacherHandout(
                         text: day.teacher_notes,
                         size: 20,
                         color: COLORS.DARK_GRAY,
+                        font: 'Arial',
                       }),
                     ],
                   }),
@@ -866,7 +911,7 @@ export async function generateTeacherHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [weekNoteAccentWidth, weekNoteContentWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: [
         new TableRow({
           children: [
@@ -875,12 +920,13 @@ export async function generateTeacherHandout(
               width: { size: weekNoteAccentWidth, type: WidthType.DXA },
               shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
               borders: noBorder,
-              children: [new Paragraph({ text: '' })],
+              children: [new Paragraph({})],
             }),
             // Content cell
             new TableCell({
               width: { size: weekNoteContentWidth, type: WidthType.DXA },
               shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: lessonPlan.teacher_notes.map(
                 (note, idx) =>
                   new Paragraph({
@@ -891,6 +937,7 @@ export async function generateTeacherHandout(
                         text: note,
                         size: 20,
                         color: COLORS.DARK_GRAY,
+                        font: 'Arial',
                       }),
                     ],
                   })
@@ -929,7 +976,7 @@ export async function generateTeacherHandout(
       default: {
         document: {
           run: {
-            font: 'Calibri',
+            font: 'Arial',
             size: 22,
           },
           paragraph: {

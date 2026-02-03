@@ -13,6 +13,7 @@ import {
   HeightRule,
   TableLayoutType,
   LevelFormat,
+  VerticalAlign,
 } from 'docx'
 import type { StudentHandout } from '@/types/lesson'
 
@@ -30,6 +31,7 @@ const COLORS = {
   LINE_GRAY: 'DDDDDD',
 }
 
+// Borders applied to cells, not tables (per docx skill)
 const noBorder = {
   top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
   bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
@@ -44,6 +46,9 @@ const thinBorder = {
   right: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
 }
 
+// Table margins for consistent cell padding
+const tableMargins = { top: 100, bottom: 100, left: 180, right: 180 }
+
 /**
  * Creates a section header with left accent bar sidebar
  */
@@ -55,7 +60,7 @@ function createSectionHeader(text: string): Table {
     width: { size: 100, type: WidthType.PERCENTAGE },
     layout: TableLayoutType.FIXED,
     columnWidths: [accentWidth, contentWidth],
-    borders: noBorder,
+    margins: tableMargins,
     rows: [
       new TableRow({
         children: [
@@ -79,7 +84,7 @@ function createSectionHeader(text: string): Table {
                     bold: true,
                     size: 30, // 15pt
                     color: COLORS.NAVY_BLUE,
-                    font: 'Cambria',
+                    font: 'Arial',
                   }),
                 ],
               }),
@@ -106,7 +111,7 @@ export async function generateStudentHandout(
     width: { size: 100, type: WidthType.PERCENTAGE },
     layout: TableLayoutType.FIXED,
     columnWidths: [fullWidth],
-    borders: thinBorder,
+    margins: tableMargins,
     rows: [
       // Accent bar (thin top bar)
       new TableRow({
@@ -136,7 +141,7 @@ export async function generateStudentHandout(
                     bold: true,
                     size: 48, // 24pt
                     color: COLORS.WHITE,
-                    font: 'Cambria',
+                    font: 'Arial',
                   }),
                 ],
               }),
@@ -151,7 +156,7 @@ export async function generateStudentHandout(
                           text: handout.subtitle,
                           size: 24, // 12pt
                           color: COLORS.LIGHT_BLUE,
-                          font: 'Calibri',
+                          font: 'Arial',
                         }),
                       ],
                     }),
@@ -174,13 +179,14 @@ export async function generateStudentHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [fullWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: [
         new TableRow({
           children: [
             new TableCell({
               width: { size: fullWidth, type: WidthType.DXA },
               shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: [
                 new Paragraph({
                   children: [
@@ -188,6 +194,7 @@ export async function generateStudentHandout(
                       text: handout.instructions,
                       size: 22, // 11pt
                       color: COLORS.DARK_GRAY,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -215,6 +222,7 @@ export async function generateStudentHandout(
               text: section.content,
               size: 22,
               color: COLORS.DARK_GRAY,
+              font: 'Arial',
             }),
           ],
         })
@@ -231,7 +239,7 @@ export async function generateStudentHandout(
           width: { size: 100, type: WidthType.PERCENTAGE },
           layout: TableLayoutType.FIXED,
           columnWidths: [badgeWidth, itemContentWidth],
-          borders: thinBorder,
+          margins: tableMargins,
           rows: section.items.map((item, idx) =>
             new TableRow({
               children: [
@@ -239,7 +247,8 @@ export async function generateStudentHandout(
                 new TableCell({
                   width: { size: badgeWidth, type: WidthType.DXA },
                   shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-                  verticalAlign: 'center',
+                  borders: thinBorder,
+                  verticalAlign: VerticalAlign.CENTER,
                   children: [
                     new Paragraph({
                       alignment: AlignmentType.CENTER,
@@ -249,6 +258,7 @@ export async function generateStudentHandout(
                           bold: true,
                           size: 24,
                           color: COLORS.WHITE,
+                          font: 'Arial',
                         }),
                       ],
                     }),
@@ -261,6 +271,7 @@ export async function generateStudentHandout(
                     fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
                     type: ShadingType.CLEAR,
                   },
+                  borders: thinBorder,
                   children: [
                     new Paragraph({
                       children: [
@@ -268,6 +279,7 @@ export async function generateStudentHandout(
                           text: item,
                           size: 22,
                           color: COLORS.DARK_GRAY,
+                          font: 'Arial',
                         }),
                       ],
                     }),
@@ -289,6 +301,7 @@ export async function generateStudentHandout(
                   text: item,
                   size: 22,
                   color: COLORS.DARK_GRAY,
+                  font: 'Arial',
                 }),
               ],
             })
@@ -308,6 +321,7 @@ export async function generateStudentHandout(
               new TextRun({
                 text: '_'.repeat(85),
                 color: COLORS.LINE_GRAY,
+                font: 'Arial',
               }),
             ],
           })
@@ -331,7 +345,7 @@ export async function generateStudentHandout(
         width: { size: 100, type: WidthType.PERCENTAGE },
         layout: TableLayoutType.FIXED,
         columnWidths: [qBadgeWidth, qContentWidth],
-        borders: thinBorder,
+        margins: tableMargins,
         rows: [
           new TableRow({
             children: [
@@ -339,7 +353,8 @@ export async function generateStudentHandout(
               new TableCell({
                 width: { size: qBadgeWidth, type: WidthType.DXA },
                 shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-                verticalAlign: 'center',
+                borders: thinBorder,
+                verticalAlign: VerticalAlign.CENTER,
                 children: [
                   new Paragraph({
                     alignment: AlignmentType.CENTER,
@@ -349,6 +364,7 @@ export async function generateStudentHandout(
                         bold: true,
                         size: 28,
                         color: COLORS.WHITE,
+                        font: 'Arial',
                       }),
                     ],
                   }),
@@ -361,6 +377,7 @@ export async function generateStudentHandout(
                   fill: i % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
                   type: ShadingType.CLEAR,
                 },
+                borders: thinBorder,
                 children: [
                   // Question text
                   new Paragraph({
@@ -370,6 +387,7 @@ export async function generateStudentHandout(
                         text: question,
                         size: 22,
                         color: COLORS.DARK_GRAY,
+                        font: 'Arial',
                       }),
                     ],
                   }),
@@ -384,6 +402,7 @@ export async function generateStudentHandout(
                             new TextRun({
                               text: '_'.repeat(80),
                               color: COLORS.LINE_GRAY,
+                              font: 'Arial',
                             }),
                           ],
                         })
@@ -419,6 +438,7 @@ export async function generateStudentHandout(
             new TableCell({
               width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
               shading: { fill: cardBg, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: [
                 // Term (bold, navy)
                 new Paragraph({
@@ -429,6 +449,7 @@ export async function generateStudentHandout(
                       bold: true,
                       size: 22,
                       color: COLORS.NAVY_BLUE,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -439,6 +460,7 @@ export async function generateStudentHandout(
                       text: definition,
                       size: 20,
                       color: COLORS.DARK_GRAY,
+                      font: 'Arial',
                     }),
                   ],
                 }),
@@ -451,7 +473,7 @@ export async function generateStudentHandout(
             new TableCell({
               width: { size: convertInchesToTwip(3.25), type: WidthType.DXA },
               borders: noBorder,
-              children: [new Paragraph({ text: '' })],
+              children: [new Paragraph({})],
             })
           )
         }
@@ -465,7 +487,7 @@ export async function generateStudentHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [vocabColWidth, vocabColWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: vocabRows,
     })
     children.push(vocabTable)
@@ -482,7 +504,7 @@ export async function generateStudentHandout(
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
       columnWidths: [tipAccentWidth, tipContentWidth],
-      borders: thinBorder,
+      margins: tableMargins,
       rows: [
         new TableRow({
           children: [
@@ -491,12 +513,13 @@ export async function generateStudentHandout(
               width: { size: tipAccentWidth, type: WidthType.DXA },
               shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
               borders: noBorder,
-              children: [new Paragraph({ text: '' })],
+              children: [new Paragraph({})],
             }),
             // Content cell
             new TableCell({
               width: { size: tipContentWidth, type: WidthType.DXA },
               shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
+              borders: thinBorder,
               children: handout.tips.map(
                 (tip, idx) =>
                   new Paragraph({
@@ -507,6 +530,7 @@ export async function generateStudentHandout(
                         text: tip,
                         size: 20,
                         color: COLORS.DARK_GRAY,
+                        font: 'Arial',
                       }),
                     ],
                   })
@@ -545,7 +569,7 @@ export async function generateStudentHandout(
       default: {
         document: {
           run: {
-            font: 'Calibri',
+            font: 'Arial',
             size: 22, // 11pt
           },
           paragraph: {
