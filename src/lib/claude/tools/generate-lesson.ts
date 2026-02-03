@@ -14,12 +14,17 @@ export const generateLessonTool: Anthropic.Tool = {
         items: { type: 'string' },
         description: 'Topics to cover this week',
       },
-      days_count: { type: 'number', description: 'Number of days (4 or 5)' },
+      selected_days: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Days to generate plans for (e.g., ["Mon", "Tue", "Wed"])',
+      },
       class_duration: { type: 'number', description: 'Class duration in minutes' },
       standards_text: { type: 'string', description: 'Relevant content standards' },
+      include_handouts: { type: 'boolean', description: 'Whether to generate student handouts' },
       additional_context: { type: 'string', description: 'Any additional instructions' },
     },
-    required: ['week_number', 'unit_name', 'topics', 'days_count', 'class_duration'],
+    required: ['week_number', 'unit_name', 'topics', 'selected_days', 'class_duration'],
   },
 }
 
@@ -27,18 +32,47 @@ export async function executeGenerateLesson(params: {
   week_number: number
   unit_name: string
   topics: string[]
-  days_count: number
+  selected_days: string[]
   class_duration: number
   standards_text?: string
+  include_handouts?: boolean
   additional_context?: string
 }): Promise<LessonPlanInput> {
   const client = new Anthropic()
+
+  const dayLabels: Record<string, string> = {
+    'Mon': 'Monday',
+    'Tue': 'Tuesday',
+    'Wed': 'Wednesday',
+    'Thu': 'Thursday',
+    'Fri': 'Friday',
+  }
+  const selectedDayNames = params.selected_days.map(d => dayLabels[d] || d).join(', ')
+
+  const handoutSection = params.include_handouts ? `
+  "student_handouts": [
+    {
+      "name": "Handout name (e.g., Camera Parts Guide)",
+      "title": "Display title for the handout",
+      "subtitle": "Media Foundations - Week ${params.week_number}",
+      "instructions": "Clear instructions for students on how to use this handout",
+      "sections": [
+        {
+          "heading": "Section heading",
+          "numbered": true,
+          "items": ["Step or item 1", "Step or item 2"]
+        }
+      ],
+      "vocabulary": {"Term": "Definition"}
+    }
+  ],
+  "teacher_notes": ["Note 1 for teacher", "Note 2 for teacher"],` : ''
 
   const prompt = `You are an expert curriculum designer. Generate a detailed lesson plan for:
 
 Week ${params.week_number}: ${params.unit_name}
 Topics: ${params.topics.join(', ')}
-Days: ${params.days_count}
+Days: ${selectedDayNames} (${params.selected_days.length} days)
 Class Duration: ${params.class_duration} minutes
 
 ${params.standards_text ? `Standards:\n${params.standards_text}\n` : ''}
@@ -48,38 +82,48 @@ Generate a complete JSON lesson plan with this structure:
 {
   "week": "${params.week_number}",
   "unit": "${params.unit_name}",
-  "week_focus": "Brief focus statement",
-  "week_overview": "Detailed week description",
-  "week_objectives": ["Objective 1", "Objective 2"],
-  "week_materials": ["Material 1", "Material 2"],
-  "formative_assessment": "Daily assessments",
-  "summative_assessment": "Major assessment with points",
-  "weekly_deliverable": "What is due at end of week",
-  "standards_alignment": "Standards reference",
+  "week_focus": "Brief focus statement for this week",
+  "week_overview": "Detailed week description (2-3 sentences)",
+  "week_objectives": ["Weekly objective 1", "Weekly objective 2", "Weekly objective 3"],
+  "week_materials": ["Material needed for the week 1", "Material 2"],
+  "formative_assessment": "Description of daily/ongoing assessments",
+  "summative_assessment": "Description of major assessment with points",
+  "weekly_deliverable": "What students must complete by end of week",
+  "standards_alignment": "Standards reference text",${handoutSection}
   "days": [
     {
+      "day_label": "Monday",
       "topic": "Day topic",
-      "objectives": ["Learning objective 1"],
-      "day_materials": ["Material for this day"],
+      "overview": "Brief overview of this day's lesson",
+      "objectives": ["Learning objective 1", "Learning objective 2"],
+      "day_materials": ["Material for this specific day"],
       "schedule": [
-        {"time": "10 min", "name": "Bell Ringer", "description": "Activity description"}
+        {"time": "10 min", "name": "Bell Ringer", "description": "Warm-up activity description"},
+        {"time": "25 min", "name": "Direct Instruction", "description": "Main teaching content"},
+        {"time": "30 min", "name": "Guided Practice", "description": "Hands-on activity"},
+        {"time": "20 min", "name": "Independent Practice", "description": "Student work time"},
+        {"time": "5 min", "name": "Wrap-Up", "description": "Exit ticket or summary"}
       ],
-      "vocabulary": {"Term": "Definition"},
+      "vocabulary": {"Term1": "Definition1", "Term2": "Definition2"},
       "differentiation": {
-        "Advanced": "Extension activity",
-        "Struggling": "Support provided",
-        "ELL": "Language accommodations"
+        "Advanced": "Extension activity for advanced learners",
+        "Struggling": "Support strategies for struggling learners",
+        "ELL": "Language accommodations for English learners"
       },
-      "teacher_notes": "Notes for the teacher",
-      "content_standards": "Standard code"
+      "teacher_notes": "Helpful notes for the teacher",
+      "content_standards": "Relevant standard codes"
     }
   ]
 }
 
-Each day's schedule should total ${params.class_duration} minutes.
-Include a Bell Ringer, Direct Instruction, Guided/Independent Practice, and Wrap-Up.
-Make activities engaging and hands-on where appropriate.
-Return ONLY valid JSON, no other text.`
+IMPORTANT:
+- Generate exactly ${params.selected_days.length} day objects in the "days" array, one for each: ${selectedDayNames}
+- Each day MUST have a "day_label" field with the full day name (Monday, Tuesday, etc.)
+- Each day's schedule times should total ${params.class_duration} minutes
+- Include Bell Ringer, Direct Instruction, Practice activities, and Wrap-Up in each day
+- Make activities engaging and hands-on where appropriate
+${params.include_handouts ? '- Generate 1-3 student handouts that support the week\'s lessons (guides, worksheets, reference sheets)' : ''}
+- Return ONLY valid JSON, no other text`
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',

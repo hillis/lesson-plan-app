@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const body = await request.json()
   const {
     weekNumber,
-    daysCount = 5,
+    selectedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
     classDuration = 90,
     includeHandouts = true,
     includePresentations = false,
@@ -25,6 +25,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Week number required' }, { status: 400 })
   }
 
+  if (!selectedDays || selectedDays.length === 0) {
+    return NextResponse.json({ error: 'At least one day must be selected' }, { status: 400 })
+  }
+
   // Create generation record
   const { data: generation, error: createError } = await supabase
     .from('generations')
@@ -32,7 +36,7 @@ export async function POST(request: Request) {
       teacher_id: user.id,
       week_number: weekNumber,
       config: {
-        days: daysCount === 5 ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] : ['Mon', 'Tue', 'Wed', 'Thu'],
+        days: selectedDays,
         include_presentations: includePresentations,
         include_handouts: includeHandouts,
         custom_instructions: customInstructions,
@@ -63,7 +67,7 @@ export async function POST(request: Request) {
     const lessonPlan = await generateLessonPlanWithAgent(
       {
         weekNumber,
-        daysCount,
+        selectedDays,
         classDuration,
         includeHandouts,
         includePresentations,

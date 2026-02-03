@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 import { DriveFilePicker } from './DriveFilePicker'
 import { GenerationProgress } from './GenerationProgress'
 import { TemplatePanel } from './TemplatePanel'
@@ -20,7 +20,7 @@ interface LessonGeneratorProps {
 export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorProps) {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default-cte')
   const [weekNumber, setWeekNumber] = useState('')
-  const [daysCount, setDaysCount] = useState<4 | 5>(5)
+  const [selectedDays, setSelectedDays] = useState<string[]>(['Mon', 'Tue', 'Wed', 'Thu', 'Fri'])
   const [includeHandouts, setIncludeHandouts] = useState(true)
   const [includePresentations, setIncludePresentations] = useState(false)
   const [customInstructions, setCustomInstructions] = useState('')
@@ -61,11 +61,33 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
     loadFolderPreference()
   }, [])
 
+  const toggleDay = (day: string) => {
+    setSelectedDays(prev => {
+      if (prev.includes(day)) {
+        // Don't allow deselecting the last day
+        if (prev.length === 1) return prev
+        return prev.filter(d => d !== day)
+      }
+      // Add day and sort to maintain order
+      const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+      return [...prev, day].sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b))
+    })
+  }
+
   const handleGenerate = async () => {
     if (!weekNumber || isNaN(parseInt(weekNumber))) {
       toast({
         title: 'Invalid week number',
         description: 'Please enter a valid week number',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (selectedDays.length === 0) {
+      toast({
+        title: 'No days selected',
+        description: 'Please select at least one day',
         variant: 'destructive',
       })
       return
@@ -82,7 +104,7 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           weekNumber: parseInt(weekNumber),
-          daysCount,
+          selectedDays,
           classDuration: 90,
           includeHandouts,
           includePresentations,
@@ -172,12 +194,23 @@ export function LessonGenerator({ hasSyllabus, hasStandards }: LessonGeneratorPr
         {/* Days */}
         <div className="space-y-2">
           <Label>Days per Week</Label>
-          <Tabs value={String(daysCount)} onValueChange={(v) => setDaysCount(Number(v) as 4 | 5)}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="5">5 Days (Mon-Fri)</TabsTrigger>
-              <TabsTrigger value="4">4 Days (Mon-Thu)</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex gap-2">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day) => (
+              <Button
+                key={day}
+                type="button"
+                variant={selectedDays.includes(day) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleDay(day)}
+                className={cn(
+                  'flex-1',
+                  selectedDays.includes(day) && 'ring-2 ring-primary ring-offset-2'
+                )}
+              >
+                {day}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Options */}

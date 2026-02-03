@@ -1,5 +1,7 @@
 import { generateLessonPlanDocx } from './lesson-plan-docx'
 import { fillCTETemplate } from './cte-template-filler'
+import { generateStudentHandout, getStudentHandoutFilename } from './student-handout-generator'
+import { generateTeacherHandout, getTeacherHandoutFilename } from './teacher-handout-generator'
 import { loadTemplate, DEFAULT_TEMPLATE_ID } from '@/lib/templates/loader'
 import { createClient } from '@/lib/supabase/server'
 import type { LessonPlanInput } from '@/types/lesson'
@@ -58,8 +60,36 @@ export async function generateAllDocuments(
     })
   }
 
-  // TODO: Add teacher handout generation
-  // TODO: Add student handout generation
+  // Generate teacher handout (one for the entire week)
+  try {
+    const teacherHandoutBuffer = await generateTeacherHandout(lessonPlan, weekNum)
+    files.push({
+      name: getTeacherHandoutFilename(lessonPlan, weekNum),
+      content: teacherHandoutBuffer,
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      type: 'teacher_handout',
+    })
+  } catch (error) {
+    console.warn('Teacher handout generation failed:', error)
+  }
+
+  // Generate student handouts (one per handout entry)
+  if (lessonPlan.student_handouts && lessonPlan.student_handouts.length > 0) {
+    for (const handout of lessonPlan.student_handouts) {
+      try {
+        const studentHandoutBuffer = await generateStudentHandout(handout, weekNum)
+        files.push({
+          name: getStudentHandoutFilename(handout),
+          content: studentHandoutBuffer,
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          type: 'student_handout',
+        })
+      } catch (error) {
+        console.warn(`Student handout "${handout.name}" generation failed:`, error)
+      }
+    }
+  }
+
   // TODO: Add presentation generation (if includePresentations)
 
   return files

@@ -17,6 +17,7 @@ export interface LessonPlanInput {
 }
 
 export interface DayPlan {
+  day_label?: string
   topic: string
   objectives: string[]
   day_materials: string[]
@@ -48,10 +49,14 @@ export interface StudentHandout {
   instructions: string
   sections: HandoutSection[]
   vocabulary?: Record<string, string>
+  questions?: string[]
+  tips?: string[]
 }
 
 export interface HandoutSection {
   heading: string
   numbered?: boolean
   items: string[]
+  content?: string
+  blank_lines?: number
 }
