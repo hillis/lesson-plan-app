@@ -1,5 +1,5 @@
 import { generateLessonPlanDocx } from './lesson-plan-docx'
-import { mergeTemplate } from './template-merger'
+import { fillCTETemplate } from './cte-template-filler'
 import { loadTemplate, DEFAULT_TEMPLATE_ID } from '@/lib/templates/loader'
 import { createClient } from '@/lib/supabase/server'
 import type { LessonPlanInput } from '@/types/lesson'
@@ -38,8 +38,13 @@ export async function generateAllDocuments(
     let docBuffer: Buffer
 
     if (templateBuffer) {
-      // Use template-based generation
-      docBuffer = await mergeTemplate(templateBuffer, lessonPlan, i)
+      // Use direct template filling (like Python CTE skill)
+      try {
+        docBuffer = await fillCTETemplate(templateBuffer, lessonPlan, i)
+      } catch (error) {
+        console.warn('Template fill failed, using scratch generation:', error)
+        docBuffer = await generateLessonPlanDocx(day, weekNum, dayNum, lessonPlan.unit)
+      }
     } else {
       // Fall back to scratch generation
       docBuffer = await generateLessonPlanDocx(day, weekNum, dayNum, lessonPlan.unit)
