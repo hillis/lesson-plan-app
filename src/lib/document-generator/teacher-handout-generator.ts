@@ -13,6 +13,7 @@ import {
   HeightRule,
   PageBreak,
   TableLayoutType,
+  LevelFormat,
 } from 'docx'
 import type { LessonPlanInput, DayPlan } from '@/types/lesson'
 
@@ -66,7 +67,7 @@ function createSectionHeader(text: string, level: 1 | 2 = 1): Table {
             width: { size: ACCENT_BAR_WIDTH, type: WidthType.DXA },
             shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
             borders: noBorder,
-            children: [new Paragraph({ text: '' })],
+            children: [new Paragraph({})],
           }),
           // Content cell
           new TableCell({
@@ -117,7 +118,7 @@ export async function generateTeacherHandout(
           new TableCell({
             shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
             borders: noBorder,
-            children: [new Paragraph({ text: '' })],
+            children: [new Paragraph({})],
           }),
         ],
       }),
@@ -176,7 +177,7 @@ export async function generateTeacherHandout(
     ],
   })
   children.push(headerTable)
-  children.push(new Paragraph({ text: '' }))
+  children.push(new Paragraph({}))
 
   // === WEEK OVERVIEW BOX ===
   if (lessonPlan.week_overview || lessonPlan.week_focus) {
@@ -237,7 +238,7 @@ export async function generateTeacherHandout(
       ],
     })
     children.push(overviewTable)
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === WEEKLY LEARNING OBJECTIVES ===
@@ -295,7 +296,7 @@ export async function generateTeacherHandout(
       rows: objRows,
     })
     children.push(objTable)
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === MATERIALS NEEDED FOR THE WEEK ===
@@ -353,7 +354,7 @@ export async function generateTeacherHandout(
       rows: matRows,
     })
     children.push(matTable)
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === ASSESSMENT OVERVIEW ===
@@ -409,7 +410,7 @@ export async function generateTeacherHandout(
       rows: [new TableRow({ children: assessCells })],
     })
     children.push(assessTable)
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === DAILY SECTIONS ===
@@ -490,7 +491,7 @@ export async function generateTeacherHandout(
       ],
     })
     children.push(dayHeaderTable)
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
 
     // Learning Objectives
     if (day.objectives && day.objectives.length > 0) {
@@ -510,10 +511,11 @@ export async function generateTeacherHandout(
                 children: day.objectives.map(
                   (obj, idx) =>
                     new Paragraph({
+                      numbering: { reference: 'teacher-bullet-list', level: 0 },
                       spacing: idx === 0 ? {} : { before: 40 },
                       children: [
                         new TextRun({
-                          text: `\u2022 ${obj}`,
+                          text: obj,
                           size: 20,
                           color: COLORS.DARK_GRAY,
                         }),
@@ -850,7 +852,7 @@ export async function generateTeacherHandout(
       children.push(notesTable)
     }
 
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === WEEK-LEVEL TEACHER NOTES ===
@@ -882,10 +884,11 @@ export async function generateTeacherHandout(
               children: lessonPlan.teacher_notes.map(
                 (note, idx) =>
                   new Paragraph({
+                    numbering: { reference: 'teacher-bullet-list', level: 0 },
                     spacing: idx === 0 ? {} : { before: 80 },
                     children: [
                       new TextRun({
-                        text: `\u2022 ${note}`,
+                        text: note,
                         size: 20,
                         color: COLORS.DARK_GRAY,
                       }),
@@ -902,6 +905,26 @@ export async function generateTeacherHandout(
 
   // Create the document
   const doc = new Document({
+    numbering: {
+      config: [
+        {
+          reference: 'teacher-bullet-list',
+          levels: [
+            {
+              level: 0,
+              format: LevelFormat.BULLET,
+              text: '\u2022',
+              alignment: AlignmentType.LEFT,
+              style: {
+                paragraph: {
+                  indent: { left: 720, hanging: 360 },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
     styles: {
       default: {
         document: {

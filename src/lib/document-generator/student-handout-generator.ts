@@ -12,6 +12,7 @@ import {
   convertInchesToTwip,
   HeightRule,
   TableLayoutType,
+  LevelFormat,
 } from 'docx'
 import type { StudentHandout } from '@/types/lesson'
 
@@ -63,7 +64,7 @@ function createSectionHeader(text: string): Table {
             width: { size: accentWidth, type: WidthType.DXA },
             shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
             borders: noBorder,
-            children: [new Paragraph({ text: '' })],
+            children: [new Paragraph({})],
           }),
           // Content cell
           new TableCell({
@@ -114,7 +115,7 @@ export async function generateStudentHandout(
           new TableCell({
             shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
             borders: noBorder,
-            children: [new Paragraph({ text: '' })],
+            children: [new Paragraph({})],
           }),
         ],
       }),
@@ -163,7 +164,7 @@ export async function generateStudentHandout(
     ],
   })
   children.push(headerTable)
-  children.push(new Paragraph({ text: '' })) // Spacing
+  children.push(new Paragraph({})) // Spacing
 
   // === INSTRUCTIONS BOX ===
   if (handout.instructions) {
@@ -197,7 +198,7 @@ export async function generateStudentHandout(
       ],
     })
     children.push(instructionsTable)
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === MAIN CONTENT SECTIONS ===
@@ -278,14 +279,14 @@ export async function generateStudentHandout(
         })
         children.push(itemsTable)
       } else {
-        // Bulleted items
+        // Bulleted items - use proper Word numbering
         for (const item of section.items) {
           children.push(
             new Paragraph({
-              indent: { left: convertInchesToTwip(0.25) },
+              numbering: { reference: 'student-bullet-list', level: 0 },
               children: [
                 new TextRun({
-                  text: `\u2022 ${item}`,
+                  text: item,
                   size: 22,
                   color: COLORS.DARK_GRAY,
                 }),
@@ -298,7 +299,7 @@ export async function generateStudentHandout(
 
     // Blank lines for writing
     if (section.blank_lines && section.blank_lines > 0) {
-      children.push(new Paragraph({ text: '' }))
+      children.push(new Paragraph({}))
       for (let i = 0; i < section.blank_lines; i++) {
         children.push(
           new Paragraph({
@@ -314,7 +315,7 @@ export async function generateStudentHandout(
       }
     }
 
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === QUESTIONS SECTION ===
@@ -394,7 +395,7 @@ export async function generateStudentHandout(
         ],
       })
       children.push(questionTable)
-      children.push(new Paragraph({ text: '' }))
+      children.push(new Paragraph({}))
     }
   }
 
@@ -468,7 +469,7 @@ export async function generateStudentHandout(
       rows: vocabRows,
     })
     children.push(vocabTable)
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({}))
   }
 
   // === TIPS/NOTES SECTION ===
@@ -499,10 +500,11 @@ export async function generateStudentHandout(
               children: handout.tips.map(
                 (tip, idx) =>
                   new Paragraph({
+                    numbering: { reference: 'student-bullet-list', level: 0 },
                     spacing: idx === 0 ? {} : { before: 80 },
                     children: [
                       new TextRun({
-                        text: `- ${tip}`,
+                        text: tip,
                         size: 20,
                         color: COLORS.DARK_GRAY,
                       }),
@@ -519,6 +521,26 @@ export async function generateStudentHandout(
 
   // Create the document
   const doc = new Document({
+    numbering: {
+      config: [
+        {
+          reference: 'student-bullet-list',
+          levels: [
+            {
+              level: 0,
+              format: LevelFormat.BULLET,
+              text: '\u2022',
+              alignment: AlignmentType.LEFT,
+              style: {
+                paragraph: {
+                  indent: { left: 720, hanging: 360 },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
     styles: {
       default: {
         document: {
