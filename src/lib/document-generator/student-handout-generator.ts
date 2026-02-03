@@ -11,6 +11,7 @@ import {
   ShadingType,
   convertInchesToTwip,
   HeightRule,
+  TableLayoutType,
 } from 'docx'
 import type { StudentHandout } from '@/types/lesson'
 
@@ -46,22 +47,27 @@ const thinBorder = {
  * Creates a section header with left accent bar sidebar
  */
 function createSectionHeader(text: string): Table {
+  const accentWidth = convertInchesToTwip(0.08)
+  const contentWidth = convertInchesToTwip(6.82)
+
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    columnWidths: [accentWidth, contentWidth],
     borders: noBorder,
     rows: [
       new TableRow({
         children: [
           // Accent bar
           new TableCell({
-            width: { size: convertInchesToTwip(0.08), type: WidthType.DXA },
+            width: { size: accentWidth, type: WidthType.DXA },
             shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
             borders: noBorder,
             children: [new Paragraph({ text: '' })],
           }),
           // Content cell
           new TableCell({
-            width: { size: convertInchesToTwip(6.4), type: WidthType.DXA },
+            width: { size: contentWidth, type: WidthType.DXA },
             borders: noBorder,
             children: [
               new Paragraph({
@@ -94,8 +100,11 @@ export async function generateStudentHandout(
   const children: (Paragraph | Table)[] = []
 
   // === HEADER BANNER with accent bar ===
+  const fullWidth = convertInchesToTwip(6.9)
   const headerTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    columnWidths: [fullWidth],
     borders: thinBorder,
     rows: [
       // Accent bar (thin top bar)
@@ -162,11 +171,14 @@ export async function generateStudentHandout(
 
     const instructionsTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [fullWidth],
       borders: thinBorder,
       rows: [
         new TableRow({
           children: [
             new TableCell({
+              width: { size: fullWidth, type: WidthType.DXA },
               shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
               children: [
                 new Paragraph({
@@ -212,15 +224,19 @@ export async function generateStudentHandout(
     if (section.items && section.items.length > 0) {
       if (section.numbered) {
         // Numbered items with circular badges
+        const badgeWidth = convertInchesToTwip(0.45)
+        const itemContentWidth = convertInchesToTwip(6.45)
         const itemsTable = new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
+          layout: TableLayoutType.FIXED,
+          columnWidths: [badgeWidth, itemContentWidth],
           borders: thinBorder,
           rows: section.items.map((item, idx) =>
             new TableRow({
               children: [
                 // Number badge cell
                 new TableCell({
-                  width: { size: convertInchesToTwip(0.45), type: WidthType.DXA },
+                  width: { size: badgeWidth, type: WidthType.DXA },
                   shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
                   verticalAlign: 'center',
                   children: [
@@ -239,7 +255,7 @@ export async function generateStudentHandout(
                 }),
                 // Content cell
                 new TableCell({
-                  width: { size: convertInchesToTwip(6.05), type: WidthType.DXA },
+                  width: { size: itemContentWidth, type: WidthType.DXA },
                   shading: {
                     fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
                     type: ShadingType.CLEAR,
@@ -308,15 +324,19 @@ export async function generateStudentHandout(
     for (let i = 0; i < handout.questions.length; i++) {
       const question = handout.questions[i]
 
+      const qBadgeWidth = convertInchesToTwip(0.5)
+      const qContentWidth = convertInchesToTwip(6.4)
       const questionTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+        columnWidths: [qBadgeWidth, qContentWidth],
         borders: thinBorder,
         rows: [
           new TableRow({
             children: [
               // Question number badge
               new TableCell({
-                width: { size: convertInchesToTwip(0.5), type: WidthType.DXA },
+                width: { size: qBadgeWidth, type: WidthType.DXA },
                 shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
                 verticalAlign: 'center',
                 children: [
@@ -335,7 +355,7 @@ export async function generateStudentHandout(
               }),
               // Question and answer area
               new TableCell({
-                width: { size: convertInchesToTwip(6.0), type: WidthType.DXA },
+                width: { size: qContentWidth, type: WidthType.DXA },
                 shading: {
                   fill: i % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
                   type: ShadingType.CLEAR,
@@ -439,8 +459,11 @@ export async function generateStudentHandout(
       vocabRows.push(new TableRow({ children: rowCells }))
     }
 
+    const vocabColWidth = convertInchesToTwip(3.45)
     const vocabTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [vocabColWidth, vocabColWidth],
       borders: thinBorder,
       rows: vocabRows,
     })
@@ -452,22 +475,26 @@ export async function generateStudentHandout(
   if (handout.tips && handout.tips.length > 0) {
     children.push(createSectionHeader('Tips & Notes'))
 
+    const tipAccentWidth = convertInchesToTwip(0.12)
+    const tipContentWidth = convertInchesToTwip(6.78)
     const tipsTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [tipAccentWidth, tipContentWidth],
       borders: thinBorder,
       rows: [
         new TableRow({
           children: [
             // Yellow accent bar
             new TableCell({
-              width: { size: convertInchesToTwip(0.12), type: WidthType.DXA },
+              width: { size: tipAccentWidth, type: WidthType.DXA },
               shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
               borders: noBorder,
               children: [new Paragraph({ text: '' })],
             }),
             // Content cell
             new TableCell({
-              width: { size: convertInchesToTwip(6.38), type: WidthType.DXA },
+              width: { size: tipContentWidth, type: WidthType.DXA },
               shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
               children: handout.tips.map(
                 (tip, idx) =>

@@ -12,6 +12,7 @@ import {
   convertInchesToTwip,
   HeightRule,
   PageBreak,
+  TableLayoutType,
 } from 'docx'
 import type { LessonPlanInput, DayPlan } from '@/types/lesson'
 
@@ -42,6 +43,11 @@ const thinBorder = {
   right: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
 }
 
+// Page width constants
+const PAGE_WIDTH = convertInchesToTwip(7.1)
+const ACCENT_BAR_WIDTH = convertInchesToTwip(0.08)
+const CONTENT_WIDTH = convertInchesToTwip(7.02)
+
 /**
  * Creates a section header with left accent bar sidebar
  */
@@ -49,20 +55,22 @@ function createSectionHeader(text: string, level: 1 | 2 = 1): Table {
   const fontSize = level === 1 ? 32 : 26 // 16pt or 13pt
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    columnWidths: [ACCENT_BAR_WIDTH, CONTENT_WIDTH],
     borders: noBorder,
     rows: [
       new TableRow({
         children: [
           // Accent bar
           new TableCell({
-            width: { size: convertInchesToTwip(0.08), type: WidthType.DXA },
+            width: { size: ACCENT_BAR_WIDTH, type: WidthType.DXA },
             shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
             borders: noBorder,
             children: [new Paragraph({ text: '' })],
           }),
           // Content cell
           new TableCell({
-            width: { size: convertInchesToTwip(6.8), type: WidthType.DXA },
+            width: { size: CONTENT_WIDTH, type: WidthType.DXA },
             borders: noBorder,
             children: [
               new Paragraph({
@@ -98,6 +106,8 @@ export async function generateTeacherHandout(
   // === HEADER BANNER with accent bar ===
   const headerTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    columnWidths: [PAGE_WIDTH],
     borders: thinBorder,
     rows: [
       // Accent bar (thin top bar)
@@ -211,11 +221,14 @@ export async function generateTeacherHandout(
 
     const overviewTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [PAGE_WIDTH],
       borders: thinBorder,
       rows: [
         new TableRow({
           children: [
             new TableCell({
+              width: { size: PAGE_WIDTH, type: WidthType.DXA },
               shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
               children: overviewChildren,
             }),
@@ -272,8 +285,12 @@ export async function generateTeacherHandout(
         })
     )
 
+    const objBadgeWidth = convertInchesToTwip(0.4)
+    const objTextWidth = convertInchesToTwip(6.7)
     const objTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [objBadgeWidth, objTextWidth],
       borders: thinBorder,
       rows: objRows,
     })
@@ -327,8 +344,11 @@ export async function generateTeacherHandout(
       matRows.push(new TableRow({ children: rowCells }))
     }
 
+    const matColWidth = convertInchesToTwip(3.55)
     const matTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [matColWidth, matColWidth],
       borders: thinBorder,
       rows: matRows,
     })
@@ -380,8 +400,11 @@ export async function generateTeacherHandout(
       })
     })
 
+    const assessColWidth = convertInchesToTwip(2.37)
     const assessTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [assessColWidth, assessColWidth, assessColWidth],
       borders: thinBorder,
       rows: [new TableRow({ children: assessCells })],
     })
@@ -402,15 +425,19 @@ export async function generateTeacherHandout(
     }
 
     // Day header - Tab-style banner with topic
+    const dayTabWidth = convertInchesToTwip(1.2)
+    const dayTopicWidth = convertInchesToTwip(5.9)
     const dayHeaderTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [dayTabWidth, dayTopicWidth],
       borders: thinBorder,
       rows: [
         new TableRow({
           children: [
             // Day number "tab"
             new TableCell({
-              width: { size: convertInchesToTwip(1.2), type: WidthType.DXA },
+              width: { size: dayTabWidth, type: WidthType.DXA },
               shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
               verticalAlign: 'center',
               children: [
@@ -440,7 +467,7 @@ export async function generateTeacherHandout(
             }),
             // Topic bar
             new TableCell({
-              width: { size: convertInchesToTwip(5.7), type: WidthType.DXA },
+              width: { size: dayTopicWidth, type: WidthType.DXA },
               shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
               verticalAlign: 'center',
               children: [
@@ -471,11 +498,14 @@ export async function generateTeacherHandout(
 
       const objBox = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+        columnWidths: [PAGE_WIDTH],
         borders: thinBorder,
         rows: [
           new TableRow({
             children: [
               new TableCell({
+                width: { size: PAGE_WIDTH, type: WidthType.DXA },
                 shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
                 children: day.objectives.map(
                   (obj, idx) =>
@@ -647,8 +677,13 @@ export async function generateTeacherHandout(
         ),
       ]
 
+      const schedTimeWidth = convertInchesToTwip(0.8)
+      const schedActivityWidth = convertInchesToTwip(1.5)
+      const schedDescWidth = convertInchesToTwip(4.8)
       const scheduleTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+        columnWidths: [schedTimeWidth, schedActivityWidth, schedDescWidth],
         borders: thinBorder,
         rows: scheduleRows,
       })
@@ -709,8 +744,11 @@ export async function generateTeacherHandout(
         vocabRows.push(new TableRow({ children: rowCells }))
       }
 
+      const vocabColWidth = convertInchesToTwip(3.55)
       const vocabTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+        columnWidths: [vocabColWidth, vocabColWidth],
         borders: thinBorder,
         rows: vocabRows,
       })
@@ -757,8 +795,11 @@ export async function generateTeacherHandout(
         })
       })
 
+      const diffColWidth = convertInchesToTwip(2.37)
       const diffTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+        columnWidths: [diffColWidth, diffColWidth, diffColWidth],
         borders: thinBorder,
         rows: [new TableRow({ children: diffCells })],
       })
@@ -769,21 +810,26 @@ export async function generateTeacherHandout(
     if (day.teacher_notes) {
       children.push(createSectionHeader('Teacher Notes', 2))
 
+      const noteAccentWidth = convertInchesToTwip(0.12)
+      const noteContentWidth = convertInchesToTwip(6.98)
       const notesTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+        columnWidths: [noteAccentWidth, noteContentWidth],
         borders: thinBorder,
         rows: [
           new TableRow({
             children: [
               // Yellow accent bar
               new TableCell({
-                width: { size: convertInchesToTwip(0.12), type: WidthType.DXA },
+                width: { size: noteAccentWidth, type: WidthType.DXA },
                 shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
                 borders: noBorder,
                 children: [new Paragraph({ text: '' })],
               }),
               // Content cell
               new TableCell({
+                width: { size: noteContentWidth, type: WidthType.DXA },
                 shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
                 children: [
                   new Paragraph({
@@ -812,21 +858,26 @@ export async function generateTeacherHandout(
     children.push(new Paragraph({ children: [new PageBreak()] }))
     children.push(createSectionHeader('Weekly Teacher Notes', 1))
 
+    const weekNoteAccentWidth = convertInchesToTwip(0.12)
+    const weekNoteContentWidth = convertInchesToTwip(6.98)
     const weekNotesTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+      columnWidths: [weekNoteAccentWidth, weekNoteContentWidth],
       borders: thinBorder,
       rows: [
         new TableRow({
           children: [
             // Yellow accent bar
             new TableCell({
-              width: { size: convertInchesToTwip(0.12), type: WidthType.DXA },
+              width: { size: weekNoteAccentWidth, type: WidthType.DXA },
               shading: { fill: 'FFD93D', type: ShadingType.CLEAR },
               borders: noBorder,
               children: [new Paragraph({ text: '' })],
             }),
             // Content cell
             new TableCell({
+              width: { size: weekNoteContentWidth, type: WidthType.DXA },
               shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
               children: lessonPlan.teacher_notes.map(
                 (note, idx) =>
