@@ -150,14 +150,29 @@ ${params.include_handouts ? '- Generate 1-3 student handouts that support the we
     }
   }
 
-  const response = await client.messages.create(requestOptions)
-
   // Extract text from response (handle both regular and thinking responses)
   let text = ''
-  for (const block of response.content) {
-    if (block.type === 'text') {
-      text = block.text
-      break
+
+  if (useThinking) {
+    // Streaming is required for extended thinking (operations may exceed 10 min timeout)
+    const stream = await client.messages.stream(requestOptions)
+    const response = await stream.finalMessage()
+
+    for (const block of response.content) {
+      if (block.type === 'text') {
+        text = block.text
+        break
+      }
+    }
+  } else {
+    // Regular non-streaming request for standard operations
+    const response = await client.messages.create(requestOptions)
+
+    for (const block of response.content) {
+      if (block.type === 'text') {
+        text = block.text
+        break
+      }
     }
   }
 
