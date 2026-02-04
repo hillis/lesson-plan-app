@@ -113,10 +113,24 @@ Generate a complete JSON lesson plan with this structure:
         "ELL": "Language accommodations for English learners"
       },
       "teacher_notes": "Helpful notes for the teacher",
-      "content_standards": "Relevant standard codes"
+      "content_standards": "ALABAMA STATE STANDARDS:\nStandard X: Description\n\nADOBE CERTIFIED PROFESSIONAL:\nX.X.x: Description"
     }
   ]
 }
+
+CONTENT STANDARDS FORMAT (Required for CTE Lesson Plans):
+The content_standards field MUST include both Alabama State Standards and Adobe Certified Professional objectives in this exact format:
+
+ALABAMA STATE STANDARDS:
+Standard 14: Identify and describe the basic camera angles used in media production.
+Standard 8: Identify media production equipment and explain how it is used.
+F1: Incorporate safety procedures in handling, operating, and maintaining tools and machinery.
+
+ADOBE CERTIFIED PROFESSIONAL:
+1.4.c: Define common film form terms and principles (shot types, rule of thirds, depth of field).
+1.4.a: Define video and audio terminology (frame rate, aspect ratio, aperture, shutter speed, ISO).
+
+Select standards that are most relevant to each day's topic and activities. Include 2-4 Alabama State Standards and 2-4 Adobe Certified Professional objectives per day.
 
 IMPORTANT:
 - Generate exactly ${params.selected_days.length} day objects in the "days" array, one for each: ${selectedDayNames}
