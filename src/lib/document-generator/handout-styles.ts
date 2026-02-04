@@ -19,10 +19,9 @@ import {
 // ============================================================================
 
 export const COLORS = {
-  // Primary colors
-  NAVY_BLUE: '1A3C6E',
-  ACCENT_BLUE: '4A90D9',
-  LIGHT_BLUE: 'D6E3F8',
+  // Primary colors (matched to Python CTE skill output)
+  NAVY_BLUE: '1B3A5F',
+  LIGHT_BLUE: 'D5E8F0',
 
   // Neutrals
   WHITE: 'FFFFFF',
@@ -30,11 +29,10 @@ export const COLORS = {
   MEDIUM_GRAY: '666666',
   DARK_GRAY: '333333',
   LINE_GRAY: 'DDDDDD',
+  BORDER_GRAY: 'CCCCCC',
 
   // Accent colors
   CREAM_YELLOW: 'FFF9E6',
-  YELLOW_ACCENT: 'FFD93D',
-  SOFT_GREEN: 'E8F5E9',
 } as const
 
 // ============================================================================
@@ -62,39 +60,26 @@ export const BORDERS = {
 
 export const TABLE_MARGINS = { top: 100, bottom: 100, left: 180, right: 180 }
 
-// Teacher handout widths (0.7" margins = 7.1" content)
+// Teacher handout widths (0.5" margins = 7.5" content)
 export const TEACHER_WIDTHS = {
-  PAGE: convertInchesToTwip(7.1),
-  ACCENT_BAR: convertInchesToTwip(0.08),
-  CONTENT: convertInchesToTwip(7.02),
-  HALF_COL: convertInchesToTwip(3.55),
-  THIRD_COL: convertInchesToTwip(2.37),
-  BADGE: convertInchesToTwip(0.4),
-  BADGE_CONTENT: convertInchesToTwip(6.7),
-  DAY_TAB: convertInchesToTwip(1.2),
-  DAY_TOPIC: convertInchesToTwip(5.9),
+  PAGE: convertInchesToTwip(7.5),
+  HALF_COL: convertInchesToTwip(3.75),
+  THIRD_COL: convertInchesToTwip(2.5),
+  DAY_TAB: convertInchesToTwip(1.0),
+  DAY_TOPIC: convertInchesToTwip(6.5),
   SCHEDULE_TIME: convertInchesToTwip(0.8),
   SCHEDULE_ACTIVITY: convertInchesToTwip(1.5),
-  SCHEDULE_DESC: convertInchesToTwip(4.8),
-  NOTE_ACCENT: convertInchesToTwip(0.12),
-  NOTE_CONTENT: convertInchesToTwip(6.98),
-  VOCAB_CARD: convertInchesToTwip(3.25),
-  DIFF_COL: convertInchesToTwip(2.2),
+  SCHEDULE_DESC: convertInchesToTwip(5.2),
+  VOCAB_TERM: convertInchesToTwip(3.75),
+  VOCAB_DEF: convertInchesToTwip(3.75),
 } as const
 
-// Student handout widths (0.8" margins = 6.9" content)
+// Student handout widths (0.6" margins = 7.3" content)
 export const STUDENT_WIDTHS = {
-  PAGE: convertInchesToTwip(6.9),
-  ACCENT_BAR: convertInchesToTwip(0.08),
-  CONTENT: convertInchesToTwip(6.82),
-  HALF_COL: convertInchesToTwip(3.45),
-  BADGE: convertInchesToTwip(0.45),
-  BADGE_CONTENT: convertInchesToTwip(6.45),
-  Q_BADGE: convertInchesToTwip(0.5),
-  Q_CONTENT: convertInchesToTwip(6.4),
-  TIP_ACCENT: convertInchesToTwip(0.12),
-  TIP_CONTENT: convertInchesToTwip(6.78),
-  VOCAB_CARD: convertInchesToTwip(3.25),
+  PAGE: convertInchesToTwip(7.3),
+  HALF_COL: convertInchesToTwip(3.65),
+  VOCAB_TERM: convertInchesToTwip(2.0),
+  VOCAB_DEF: convertInchesToTwip(5.3),
 } as const
 
 // ============================================================================
@@ -169,15 +154,15 @@ export function getNumberingConfig(reference: string): INumberingOptions {
 
 export const PAGE_MARGINS = {
   teacher: {
-    top: convertInchesToTwip(0.6),
-    bottom: convertInchesToTwip(0.6),
-    left: convertInchesToTwip(0.7),
-    right: convertInchesToTwip(0.7),
+    top: convertInchesToTwip(0.5),
+    bottom: convertInchesToTwip(0.5),
+    left: convertInchesToTwip(0.5),
+    right: convertInchesToTwip(0.5),
   },
   student: {
-    top: convertInchesToTwip(0.7),
-    bottom: convertInchesToTwip(0.7),
-    left: convertInchesToTwip(0.8),
-    right: convertInchesToTwip(0.8),
+    top: convertInchesToTwip(0.6),
+    bottom: convertInchesToTwip(0.6),
+    left: convertInchesToTwip(0.6),
+    right: convertInchesToTwip(0.6),
   },
 } as const

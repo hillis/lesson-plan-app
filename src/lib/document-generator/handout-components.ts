@@ -26,6 +26,7 @@ import {
   TEACHER_WIDTHS,
   STUDENT_WIDTHS,
 } from './handout-styles'
+import { BorderStyle, convertInchesToTwip } from 'docx'
 
 // ============================================================================
 // Text Helpers
@@ -81,50 +82,28 @@ export function whiteText(
 // ============================================================================
 
 /**
- * Creates a section header with left accent bar
+ * Creates a section header with navy bottom border (matches Python CTE skill)
  * Used in both teacher and student handouts
  */
 export function sectionHeader(
   text: string,
   options?: {
     level?: 1 | 2
-    accentWidth?: number
-    contentWidth?: number
   }
-): Table {
+): Paragraph {
   const level = options?.level ?? 1
   const fontSize = level === 1 ? FONT_SIZES.HEADING_1 : FONT_SIZES.HEADING_2
-  const spacing = level === 1 ? 80 : 40
-  const accentWidth = options?.accentWidth ?? TEACHER_WIDTHS.ACCENT_BAR
-  const contentWidth = options?.contentWidth ?? TEACHER_WIDTHS.CONTENT
 
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [accentWidth, contentWidth],
-    margins: TABLE_MARGINS,
-    rows: [
-      new TableRow({
-        children: [
-          new TableCell({
-            width: { size: accentWidth, type: WidthType.DXA },
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: BORDERS.none,
-            children: [new Paragraph({})],
-          }),
-          new TableCell({
-            width: { size: contentWidth, type: WidthType.DXA },
-            borders: BORDERS.none,
-            children: [
-              new Paragraph({
-                spacing: { before: spacing, after: spacing },
-                children: [headingText(text, { size: fontSize })],
-              }),
-            ],
-          }),
-        ],
-      }),
-    ],
+  return new Paragraph({
+    spacing: { before: 200, after: 120 },
+    border: {
+      bottom: {
+        style: BorderStyle.SINGLE,
+        size: 12,
+        color: COLORS.NAVY_BLUE,
+      },
+    },
+    children: [headingText(text, { size: fontSize })],
   })
 }
 
@@ -169,34 +148,26 @@ export function contentBox(
 }
 
 /**
- * Creates a note box with yellow accent bar (teacher notes, tips)
+ * Creates a simple cream yellow note box (matches Python CTE skill)
  */
 export function noteBox(
   paragraphs: Paragraph[],
   options?: {
-    accentWidth?: number
-    contentWidth?: number
+    width?: number
   }
 ): Table {
-  const accentWidth = options?.accentWidth ?? TEACHER_WIDTHS.NOTE_ACCENT
-  const contentWidth = options?.contentWidth ?? TEACHER_WIDTHS.NOTE_CONTENT
+  const width = options?.width ?? TEACHER_WIDTHS.PAGE
 
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     layout: TableLayoutType.FIXED,
-    columnWidths: [accentWidth, contentWidth],
+    columnWidths: [width],
     margins: TABLE_MARGINS,
     rows: [
       new TableRow({
         children: [
           new TableCell({
-            width: { size: accentWidth, type: WidthType.DXA },
-            shading: { fill: COLORS.YELLOW_ACCENT, type: ShadingType.CLEAR },
-            borders: BORDERS.none,
-            children: [new Paragraph({})],
-          }),
-          new TableCell({
-            width: { size: contentWidth, type: WidthType.DXA },
+            width: { size: width, type: WidthType.DXA },
             shading: { fill: COLORS.CREAM_YELLOW, type: ShadingType.CLEAR },
             borders: BORDERS.thin,
             children: paragraphs,
@@ -208,67 +179,216 @@ export function noteBox(
 }
 
 // ============================================================================
-// Numbered Badge Lists
+// Simple Lists (matches Python CTE skill)
 // ============================================================================
 
 /**
- * Creates a numbered list with badge column
- * Used for objectives, questions, numbered items
+ * Creates a simple numbered list (1. 2. 3. format)
  */
-export function numberedBadgeList(
+export function simpleNumberedList(
   items: string[],
-  options?: {
-    badgeWidth?: number
-    contentWidth?: number
-    badgeColor?: string
-    alternateRows?: boolean
-    badgeSize?: number
-    textSize?: number
-  }
-): Table {
-  const badgeWidth = options?.badgeWidth ?? TEACHER_WIDTHS.BADGE
-  const contentWidth = options?.contentWidth ?? TEACHER_WIDTHS.BADGE_CONTENT
-  const badgeColor = options?.badgeColor ?? COLORS.NAVY_BLUE
-  const badgeSize = options?.badgeSize ?? FONT_SIZES.BODY
-  const textSize = options?.textSize ?? FONT_SIZES.BODY
-  const alternateRows = options?.alternateRows ?? false
+  options?: { indent?: number; size?: number }
+): Paragraph[] {
+  const indent = options?.indent ?? 360
+  const size = options?.size ?? FONT_SIZES.BODY
 
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [badgeWidth, contentWidth],
-    margins: TABLE_MARGINS,
-    rows: items.map((item, idx) =>
+  return items.map(
+    (item, idx) =>
+      new Paragraph({
+        indent: { left: indent, hanging: 360 },
+        spacing: { after: 80 },
+        children: [bodyText(`${idx + 1}. ${item}`, { size })],
+      })
+  )
+}
+
+/**
+ * Creates a simple bullet list (• format)
+ */
+export function simpleBulletList(
+  items: string[],
+  options?: { indent?: number; size?: number }
+): Paragraph[] {
+  const indent = options?.indent ?? 360
+  const size = options?.size ?? FONT_SIZES.BODY
+
+  return items.map(
+    (item) =>
+      new Paragraph({
+        indent: { left: indent, hanging: 180 },
+        spacing: { after: 60 },
+        children: [bodyText(`• ${item}`, { size })],
+      })
+  )
+}
+
+/**
+ * Creates inline vocabulary (term - definition; term - definition format)
+ */
+export function inlineVocabulary(
+  items: Array<{ term: string; definition: string }>
+): Paragraph {
+  const textRuns: TextRun[] = []
+
+  items.forEach((item, idx) => {
+    if (idx > 0) {
+      textRuns.push(
+        new TextRun({
+          text: '; ',
+          color: COLORS.MEDIUM_GRAY,
+          font: 'Arial',
+          size: FONT_SIZES.BODY_SMALL,
+        })
+      )
+    }
+    textRuns.push(
+      new TextRun({
+        text: item.term,
+        bold: true,
+        color: COLORS.NAVY_BLUE,
+        font: 'Arial',
+        size: FONT_SIZES.BODY_SMALL,
+      })
+    )
+    textRuns.push(
+      new TextRun({
+        text: ` - ${item.definition}`,
+        color: COLORS.DARK_GRAY,
+        font: 'Arial',
+        size: FONT_SIZES.BODY_SMALL,
+      })
+    )
+  })
+
+  return new Paragraph({
+    spacing: { after: 120 },
+    children: textRuns,
+  })
+}
+
+/**
+ * Creates a two-column vocabulary table for student handouts
+ */
+export function vocabTable(
+  items: Array<{ term: string; definition: string }>
+): Table {
+  const termWidth = STUDENT_WIDTHS.VOCAB_TERM
+  const defWidth = STUDENT_WIDTHS.VOCAB_DEF
+
+  const headerRow = new TableRow({
+    children: [
+      new TableCell({
+        width: { size: termWidth, type: WidthType.DXA },
+        shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
+        borders: BORDERS.thin,
+        children: [
+          new Paragraph({
+            children: [whiteText('Term', { bold: true })],
+          }),
+        ],
+      }),
+      new TableCell({
+        width: { size: defWidth, type: WidthType.DXA },
+        shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
+        borders: BORDERS.thin,
+        children: [
+          new Paragraph({
+            children: [whiteText('Definition', { bold: true })],
+          }),
+        ],
+      }),
+    ],
+  })
+
+  const dataRows = items.map(
+    (item, idx) =>
       new TableRow({
         children: [
           new TableCell({
-            width: { size: badgeWidth, type: WidthType.DXA },
-            shading: { fill: badgeColor, type: ShadingType.CLEAR },
-            borders: BORDERS.thin,
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [whiteText(String(idx + 1), { bold: true, size: badgeSize })],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: contentWidth, type: WidthType.DXA },
+            width: { size: termWidth, type: WidthType.DXA },
             shading: {
-              fill: alternateRows && idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
+              fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
               type: ShadingType.CLEAR,
             },
             borders: BORDERS.thin,
             children: [
               new Paragraph({
-                children: [bodyText(item, { size: textSize })],
+                children: [headingText(item.term, { size: FONT_SIZES.BODY_SMALL })],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: defWidth, type: WidthType.DXA },
+            shading: {
+              fill: idx % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
+              type: ShadingType.CLEAR,
+            },
+            borders: BORDERS.thin,
+            children: [
+              new Paragraph({
+                children: [bodyText(item.definition, { size: FONT_SIZES.BODY_SMALL })],
               }),
             ],
           }),
         ],
       })
-    ),
+  )
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    columnWidths: [termWidth, defWidth],
+    margins: TABLE_MARGINS,
+    rows: [headerRow, ...dataRows],
+  })
+}
+
+/**
+ * Creates inline differentiation text with bold labels
+ */
+export function inlineDifferentiation(
+  differentiation: { Advanced?: string; Struggling?: string; ELL?: string }
+): Paragraph {
+  const textRuns: TextRun[] = []
+  const items = [
+    { label: 'Advanced', value: differentiation.Advanced },
+    { label: 'Struggling', value: differentiation.Struggling },
+    { label: 'ELL', value: differentiation.ELL },
+  ].filter(item => item.value)
+
+  items.forEach((item, idx) => {
+    if (idx > 0) {
+      textRuns.push(
+        new TextRun({
+          text: ' | ',
+          color: COLORS.MEDIUM_GRAY,
+          font: 'Arial',
+          size: FONT_SIZES.BODY_SMALL,
+        })
+      )
+    }
+    textRuns.push(
+      new TextRun({
+        text: `${item.label}: `,
+        bold: true,
+        color: COLORS.NAVY_BLUE,
+        font: 'Arial',
+        size: FONT_SIZES.BODY_SMALL,
+      })
+    )
+    textRuns.push(
+      new TextRun({
+        text: item.value || '',
+        color: COLORS.DARK_GRAY,
+        font: 'Arial',
+        size: FONT_SIZES.BODY_SMALL,
+      })
+    )
+  })
+
+  return new Paragraph({
+    spacing: { after: 120 },
+    children: textRuns,
   })
 }
 
@@ -288,7 +408,7 @@ export function cardGrid(
     color2?: string
   }
 ): Table {
-  const cardWidth = options?.cardWidth ?? TEACHER_WIDTHS.VOCAB_CARD
+  const cardWidth = options?.cardWidth ?? convertInchesToTwip(3.25)
   const alternateColors = options?.alternateColors ?? true
   const color1 = options?.color1 ?? COLORS.LIGHT_BLUE
   const color2 = options?.color2 ?? COLORS.LIGHT_GRAY
@@ -343,61 +463,6 @@ export function cardGrid(
   })
 }
 
-/**
- * Creates a two-column checklist grid for materials
- */
-export function checklistGrid(
-  items: string[],
-  options?: {
-    colWidth?: number
-  }
-): Table {
-  const colWidth = options?.colWidth ?? TEACHER_WIDTHS.HALF_COL
-
-  const rows: TableRow[] = []
-
-  for (let i = 0; i < items.length; i += 2) {
-    const rowCells: TableCell[] = []
-
-    for (let j = 0; j < 2; j++) {
-      if (i + j < items.length) {
-        rowCells.push(
-          new TableCell({
-            width: { size: colWidth, type: WidthType.DXA },
-            shading: {
-              fill: Math.floor(i / 2) % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
-              type: ShadingType.CLEAR,
-            },
-            borders: BORDERS.thin,
-            children: [
-              new Paragraph({
-                children: [bodyText(`[ ] ${items[i + j]}`)],
-              }),
-            ],
-          })
-        )
-      } else {
-        rowCells.push(
-          new TableCell({
-            width: { size: colWidth, type: WidthType.DXA },
-            borders: BORDERS.none,
-            children: [new Paragraph({})],
-          })
-        )
-      }
-    }
-
-    rows.push(new TableRow({ children: rowCells }))
-  }
-
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [colWidth, colWidth],
-    margins: TABLE_MARGINS,
-    rows,
-  })
-}
 
 // ============================================================================
 // Three-Column Cards (Differentiation, Assessment)
@@ -550,7 +615,7 @@ export function scheduleTable(items: ScheduleItem[]): Table {
 // ============================================================================
 
 /**
- * Creates a question block with badge and answer lines
+ * Creates a simple question with numbered format and answer line
  */
 export function questionBlock(
   question: string,
@@ -558,66 +623,44 @@ export function questionBlock(
   options?: {
     answerLines?: number
   }
-): Table {
-  const answerLines = options?.answerLines ?? 3
-  const badgeWidth = STUDENT_WIDTHS.Q_BADGE
-  const contentWidth = STUDENT_WIDTHS.Q_CONTENT
+): Paragraph[] {
+  const answerLines = options?.answerLines ?? 2
 
-  const answerParagraphs = Array(answerLines)
-    .fill(null)
-    .map(
-      () =>
-        new Paragraph({
-          spacing: { after: 160 },
-          children: [
-            new TextRun({
-              text: '_'.repeat(80),
-              color: COLORS.LINE_GRAY,
-              font: 'Arial',
-            }),
-          ],
-        })
-    )
+  const paragraphs: Paragraph[] = [
+    // Question with number
+    new Paragraph({
+      spacing: { before: 160, after: 120 },
+      children: [
+        new TextRun({
+          text: `${index + 1}. `,
+          bold: true,
+          color: COLORS.NAVY_BLUE,
+          font: 'Arial',
+          size: FONT_SIZES.BODY,
+        }),
+        bodyText(question),
+      ],
+    }),
+  ]
 
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.FIXED,
-    columnWidths: [badgeWidth, contentWidth],
-    margins: TABLE_MARGINS,
-    rows: [
-      new TableRow({
+  // Answer lines
+  for (let i = 0; i < answerLines; i++) {
+    paragraphs.push(
+      new Paragraph({
+        spacing: { after: 160 },
+        indent: { left: 360 },
         children: [
-          new TableCell({
-            width: { size: badgeWidth, type: WidthType.DXA },
-            shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
-            borders: BORDERS.thin,
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [whiteText(String(index + 1), { bold: true, size: FONT_SIZES.Q_BADGE })],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: contentWidth, type: WidthType.DXA },
-            shading: {
-              fill: index % 2 === 1 ? COLORS.LIGHT_GRAY : COLORS.WHITE,
-              type: ShadingType.CLEAR,
-            },
-            borders: BORDERS.thin,
-            children: [
-              new Paragraph({
-                spacing: { after: 200 },
-                children: [bodyText(question)],
-              }),
-              ...answerParagraphs,
-            ],
+          new TextRun({
+            text: '_'.repeat(85),
+            color: COLORS.LINE_GRAY,
+            font: 'Arial',
           }),
         ],
-      }),
-    ],
-  })
+      })
+    )
+  }
+
+  return paragraphs
 }
 
 // ============================================================================
@@ -650,7 +693,7 @@ export function writingLines(count: number): Paragraph[] {
 // ============================================================================
 
 /**
- * Creates a teacher handout header banner
+ * Creates a teacher handout header banner (single navy box - matches Python CTE skill)
  */
 export function teacherHeaderBanner(
   weekNumber: number,
@@ -663,16 +706,6 @@ export function teacherHeaderBanner(
     margins: TABLE_MARGINS,
     rows: [
       new TableRow({
-        height: { value: 100, rule: HeightRule.EXACT },
-        children: [
-          new TableCell({
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: BORDERS.none,
-            children: [new Paragraph({})],
-          }),
-        ],
-      }),
-      new TableRow({
         children: [
           new TableCell({
             shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
@@ -680,32 +713,10 @@ export function teacherHeaderBanner(
             children: [
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 40 },
+                spacing: { before: 200, after: 200 },
                 children: [
-                  new TextRun({
-                    text: `WEEK ${weekNumber}`,
-                    bold: true,
-                    size: FONT_SIZES.BODY,
-                    color: COLORS.LIGHT_BLUE,
-                    font: 'Arial',
-                  }),
-                ],
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 80, after: 80 },
-                children: [whiteText(unit, { bold: true, size: FONT_SIZES.TITLE })],
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 160 },
-                children: [
-                  new TextRun({
-                    text: 'Media Foundations \u00B7 Teacher Guide',
-                    size: FONT_SIZES.BODY,
-                    color: COLORS.LIGHT_BLUE,
-                    font: 'Arial',
-                  }),
+                  whiteText(`WEEK ${weekNumber}: `, { bold: true, size: FONT_SIZES.TITLE }),
+                  whiteText(unit.toUpperCase(), { bold: true, size: FONT_SIZES.TITLE }),
                 ],
               }),
             ],
@@ -723,22 +734,30 @@ export function studentHeaderBanner(
   title: string,
   subtitle?: string
 ): Table {
-  const subtitleParagraphs = subtitle
-    ? [
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 160 },
-          children: [
-            new TextRun({
-              text: subtitle,
-              size: FONT_SIZES.BADGE,
-              color: COLORS.LIGHT_BLUE,
-              font: 'Arial',
-            }),
-          ],
-        }),
-      ]
-    : []
+  const contentParagraphs: Paragraph[] = [
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 200, after: subtitle ? 80 : 200 },
+      children: [whiteText(title || 'Student Handout', { bold: true, size: FONT_SIZES.STUDENT_TITLE })],
+    }),
+  ]
+
+  if (subtitle) {
+    contentParagraphs.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 },
+        children: [
+          new TextRun({
+            text: subtitle,
+            size: FONT_SIZES.BODY,
+            color: COLORS.LIGHT_BLUE,
+            font: 'Arial',
+          }),
+        ],
+      })
+    )
+  }
 
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -747,28 +766,11 @@ export function studentHeaderBanner(
     margins: TABLE_MARGINS,
     rows: [
       new TableRow({
-        height: { value: 100, rule: HeightRule.EXACT },
-        children: [
-          new TableCell({
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: BORDERS.none,
-            children: [new Paragraph({})],
-          }),
-        ],
-      }),
-      new TableRow({
         children: [
           new TableCell({
             shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
             borders: BORDERS.none,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 160, after: 80 },
-                children: [whiteText(title || 'Student Handout', { bold: true, size: FONT_SIZES.STUDENT_TITLE })],
-              }),
-              ...subtitleParagraphs,
-            ],
+            children: contentParagraphs,
           }),
         ],
       }),
@@ -792,31 +794,33 @@ export function dayHeaderBanner(
     rows: [
       new TableRow({
         children: [
+          // Navy "DAY X" tab
           new TableCell({
             width: { size: TEACHER_WIDTHS.DAY_TAB, type: WidthType.DXA },
-            shading: { fill: COLORS.ACCENT_BLUE, type: ShadingType.CLEAR },
-            borders: BORDERS.thin,
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [whiteText(`DAY ${dayNumber}`, { bold: true, size: FONT_SIZES.DAY_NUMBER })],
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [whiteText(dayName, { size: FONT_SIZES.BODY_SMALL })],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: TEACHER_WIDTHS.DAY_TOPIC, type: WidthType.DXA },
             shading: { fill: COLORS.NAVY_BLUE, type: ShadingType.CLEAR },
             borders: BORDERS.thin,
             verticalAlign: VerticalAlign.CENTER,
             children: [
               new Paragraph({
-                spacing: { before: 160, after: 160 },
-                children: [whiteText(topic || 'Untitled', { bold: true, size: FONT_SIZES.DAY_HEADER })],
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 120, after: 120 },
+                children: [whiteText(`DAY ${dayNumber}`, { bold: true, size: FONT_SIZES.DAY_NUMBER })],
+              }),
+            ],
+          }),
+          // Light blue "DayName: Topic"
+          new TableCell({
+            width: { size: TEACHER_WIDTHS.DAY_TOPIC, type: WidthType.DXA },
+            shading: { fill: COLORS.LIGHT_BLUE, type: ShadingType.CLEAR },
+            borders: BORDERS.thin,
+            verticalAlign: VerticalAlign.CENTER,
+            children: [
+              new Paragraph({
+                spacing: { before: 120, after: 120 },
+                children: [
+                  headingText(`${dayName}: `, { size: FONT_SIZES.DAY_HEADER }),
+                  headingText(topic || 'Untitled', { size: FONT_SIZES.DAY_HEADER, bold: false }),
+                ],
               }),
             ],
           }),

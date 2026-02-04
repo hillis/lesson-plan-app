@@ -27,9 +27,10 @@ import {
   sectionHeader,
   contentBox,
   noteBox,
-  numberedBadgeList,
-  cardGrid,
-  checklistGrid,
+  simpleNumberedList,
+  simpleBulletList,
+  inlineVocabulary,
+  inlineDifferentiation,
   threeColumnCards,
   scheduleTable,
   teacherHeaderBanner,
@@ -85,14 +86,14 @@ export async function generateTeacherHandout(
   // === WEEKLY LEARNING OBJECTIVES ===
   if (lessonPlan.week_objectives && lessonPlan.week_objectives.length > 0) {
     children.push(sectionHeader('Weekly Learning Objectives'))
-    children.push(numberedBadgeList(lessonPlan.week_objectives))
+    children.push(...simpleNumberedList(lessonPlan.week_objectives))
     children.push(new Paragraph({}))
   }
 
   // === MATERIALS NEEDED FOR THE WEEK ===
   if (lessonPlan.week_materials && lessonPlan.week_materials.length > 0) {
     children.push(sectionHeader('Materials Needed for the Week'))
-    children.push(checklistGrid(lessonPlan.week_materials))
+    children.push(...simpleBulletList(lessonPlan.week_materials))
     children.push(new Paragraph({}))
   }
 
@@ -106,7 +107,7 @@ export async function generateTeacherHandout(
     children.push(
       threeColumnCards([
         { label: 'Formative', content: lessonPlan.formative_assessment || '', color: COLORS.LIGHT_BLUE },
-        { label: 'Summative', content: lessonPlan.summative_assessment || '', color: COLORS.SOFT_GREEN },
+        { label: 'Summative', content: lessonPlan.summative_assessment || '', color: COLORS.LIGHT_GRAY },
         { label: 'Deliverable', content: lessonPlan.weekly_deliverable || '', color: COLORS.CREAM_YELLOW },
       ])
     )
@@ -132,40 +133,13 @@ export async function generateTeacherHandout(
     // Learning Objectives
     if (day.objectives && day.objectives.length > 0) {
       children.push(sectionHeader('Learning Objectives', { level: 2 }))
-
-      const objParagraphs = day.objectives.map(
-        (obj, idx) =>
-          new Paragraph({
-            numbering: { reference: NUMBERING_REF, level: 0 },
-            spacing: idx === 0 ? {} : { before: 40 },
-            children: [bodyText(obj, { size: FONT_SIZES.BODY_SMALL })],
-          })
-      )
-
-      children.push(contentBox(objParagraphs, { width: TEACHER_WIDTHS.PAGE }))
+      children.push(...simpleBulletList(day.objectives, { size: FONT_SIZES.BODY_SMALL }))
     }
 
     // Materials
     if (day.day_materials && day.day_materials.length > 0) {
       children.push(sectionHeader('Materials', { level: 2 }))
-      children.push(
-        new Paragraph({
-          children: day.day_materials.flatMap((mat, idx) => {
-            const parts: TextRun[] = []
-            if (idx > 0) {
-              parts.push(
-                new TextRun({
-                  text: '  |  ',
-                  color: COLORS.MEDIUM_GRAY,
-                  font: 'Arial',
-                })
-              )
-            }
-            parts.push(bodyText(mat))
-            return parts
-          }),
-        })
-      )
+      children.push(...simpleBulletList(day.day_materials, { size: FONT_SIZES.BODY_SMALL }))
     }
 
     // Schedule
@@ -183,19 +157,13 @@ export async function generateTeacherHandout(
         definition,
       }))
 
-      children.push(cardGrid(vocabItems))
+      children.push(inlineVocabulary(vocabItems))
     }
 
     // Differentiation
     if (day.differentiation) {
       children.push(sectionHeader('Differentiation', { level: 2 }))
-      children.push(
-        threeColumnCards([
-          { label: 'Advanced Learners', content: day.differentiation.Advanced || '', color: COLORS.LIGHT_BLUE },
-          { label: 'Struggling Learners', content: day.differentiation.Struggling || '', color: COLORS.CREAM_YELLOW },
-          { label: 'ELL Students', content: day.differentiation.ELL || '', color: COLORS.SOFT_GREEN },
-        ])
-      )
+      children.push(inlineDifferentiation(day.differentiation))
     }
 
     // Teacher Notes (day level)

@@ -12,6 +12,7 @@ import {
 } from 'docx'
 import type { StudentHandout } from '@/types/lesson'
 import {
+  COLORS,
   FONT_SIZES,
   STUDENT_WIDTHS,
   getDocumentStyles,
@@ -23,8 +24,9 @@ import {
   sectionHeader,
   contentBox,
   noteBox,
-  numberedBadgeList,
-  cardGrid,
+  simpleNumberedList,
+  simpleBulletList,
+  vocabTable,
   questionBlock,
   writingLines,
   studentHeaderBanner,
@@ -48,16 +50,9 @@ export async function generateStudentHandout(
   // === INSTRUCTIONS BOX ===
   if (handout.instructions) {
     children.push(
-      sectionHeader('Instructions', {
-        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
-        contentWidth: STUDENT_WIDTHS.CONTENT,
-      })
-    )
-
-    children.push(
       contentBox(
         [new Paragraph({ children: [bodyText(handout.instructions)] })],
-        { width: STUDENT_WIDTHS.PAGE }
+        { width: STUDENT_WIDTHS.PAGE, bgColor: COLORS.LIGHT_BLUE }
       )
     )
     children.push(new Paragraph({}))
@@ -65,12 +60,7 @@ export async function generateStudentHandout(
 
   // === MAIN CONTENT SECTIONS ===
   for (const section of handout.sections || []) {
-    children.push(
-      sectionHeader(section.heading || 'Content', {
-        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
-        contentWidth: STUDENT_WIDTHS.CONTENT,
-      })
-    )
+    children.push(sectionHeader(section.heading || 'Content'))
 
     // Content text
     if (section.content) {
@@ -85,24 +75,11 @@ export async function generateStudentHandout(
     // Items (numbered or bulleted)
     if (section.items && section.items.length > 0) {
       if (section.numbered) {
-        // Numbered items with badges
-        children.push(
-          numberedBadgeList(section.items, {
-            badgeWidth: STUDENT_WIDTHS.BADGE,
-            contentWidth: STUDENT_WIDTHS.BADGE_CONTENT,
-            alternateRows: true,
-          })
-        )
+        // Simple numbered items
+        children.push(...simpleNumberedList(section.items))
       } else {
-        // Bulleted items
-        for (const item of section.items) {
-          children.push(
-            new Paragraph({
-              numbering: { reference: NUMBERING_REF, level: 0 },
-              children: [bodyText(item)],
-            })
-          )
-        }
+        // Simple bulleted items
+        children.push(...simpleBulletList(section.items))
       }
     }
 
@@ -117,61 +94,34 @@ export async function generateStudentHandout(
 
   // === QUESTIONS SECTION ===
   if (handout.questions && handout.questions.length > 0) {
-    children.push(
-      sectionHeader('Questions', {
-        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
-        contentWidth: STUDENT_WIDTHS.CONTENT,
-      })
-    )
+    children.push(sectionHeader('Questions'))
 
     for (let i = 0; i < handout.questions.length; i++) {
-      children.push(questionBlock(handout.questions[i], i))
-      children.push(new Paragraph({}))
+      children.push(...questionBlock(handout.questions[i], i))
     }
+    children.push(new Paragraph({}))
   }
 
   // === VOCABULARY SECTION ===
   if (handout.vocabulary && Object.keys(handout.vocabulary).length > 0) {
-    children.push(
-      sectionHeader('Vocabulary', {
-        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
-        contentWidth: STUDENT_WIDTHS.CONTENT,
-      })
-    )
+    children.push(sectionHeader('Vocabulary'))
 
     const vocabItems = Object.entries(handout.vocabulary).map(([term, definition]) => ({
       term,
       definition,
     }))
 
-    children.push(cardGrid(vocabItems, { cardWidth: STUDENT_WIDTHS.VOCAB_CARD }))
+    children.push(vocabTable(vocabItems))
     children.push(new Paragraph({}))
   }
 
   // === TIPS/NOTES SECTION ===
   if (handout.tips && handout.tips.length > 0) {
-    children.push(
-      sectionHeader('Tips & Notes', {
-        accentWidth: STUDENT_WIDTHS.ACCENT_BAR,
-        contentWidth: STUDENT_WIDTHS.CONTENT,
-      })
-    )
+    children.push(sectionHeader('Tips & Notes'))
 
-    const tipParagraphs = handout.tips.map(
-      (tip, idx) =>
-        new Paragraph({
-          numbering: { reference: NUMBERING_REF, level: 0 },
-          spacing: idx === 0 ? {} : { before: 80 },
-          children: [bodyText(tip, { size: FONT_SIZES.BODY_SMALL })],
-        })
-    )
+    const tipParagraphs = simpleBulletList(handout.tips, { size: FONT_SIZES.BODY_SMALL })
 
-    children.push(
-      noteBox(tipParagraphs, {
-        accentWidth: STUDENT_WIDTHS.TIP_ACCENT,
-        contentWidth: STUDENT_WIDTHS.TIP_CONTENT,
-      })
-    )
+    children.push(noteBox(tipParagraphs, { width: STUDENT_WIDTHS.PAGE }))
   }
 
   // Create the document
