@@ -1,10 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Validate redirect path to prevent open redirect attacks
+function getSafeRedirectPath(next: string | null): string {
+  if (!next) return '/dashboard'
+  // Only allow relative paths starting with /
+  // Reject protocol-relative URLs (//evil.com), absolute URLs, and paths with encoded characters
+  if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) {
+    return '/dashboard'
+  }
+  return next
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = getSafeRedirectPath(searchParams.get('next'))
 
   if (code) {
     const supabase = await createClient()

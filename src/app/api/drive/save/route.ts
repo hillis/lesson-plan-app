@@ -58,12 +58,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No files or lesson_plan provided' }, { status: 400 })
   }
 
-  // Auto-save to Supabase Storage (always happens before Drive upload)
+  // Auto-save to Supabase Storage in parallel (always happens before Drive upload)
   // This ensures files persist in app storage regardless of Drive save success
   if (generatedFilesForStorage.length > 0) {
     const weekNum = week_number || (lesson_plan ? parseInt(lesson_plan.week) : 1)
 
-    for (const file of generatedFilesForStorage) {
+    await Promise.all(generatedFilesForStorage.map(async (file) => {
       const filePath = `${user.id}/${Date.now()}-${file.name}`
 
       // Upload to storage
@@ -76,9 +76,7 @@ export async function POST(request: Request) {
 
       if (uploadError) {
         console.error('Storage upload error:', uploadError)
-        // Continue with Drive save even if storage fails
-        // Files will still be available in Drive
-        continue
+        return
       }
 
       // Map type to display type
@@ -94,14 +92,13 @@ export async function POST(request: Request) {
         mime_type: file.mimeType,
         file_type: fileType,
         week_number: weekNum,
-        week_start_date: null,  // Optional, can be null
+        week_start_date: null,
       })
 
       if (dbError) {
         console.error('Database insert error:', dbError)
-        // Continue with Drive save
       }
-    }
+    }))
   }
 
   try {
@@ -122,28 +119,27 @@ export async function POST(request: Request) {
       parentFolderId
     )
 
-    // Upload each file to Drive
-    const uploadedFiles = []
-    for (const file of files) {
-      const result = await uploadFile(
-        drive,
-        file.name,
-        Buffer.from(file.content, 'base64'),
-        file.mimeType,
-        folder.id
-      )
-      uploadedFiles.push({
-        name: file.name,
-        url: result.url,
+    // Upload files to Drive in parallel
+    const uploadedFiles = await Promise.all(
+      files.map(async (file) => {
+        const result = await uploadFile(
+          drive,
+          file.name,
+          Buffer.from(file.content, 'base64'),
+          file.mimeType,
+          folder.id
+        )
+        return { name: file.name, url: result.url }
       })
-    }
+    )
 
-    // Update generation with Drive folder URL
+    // Update generation with Drive folder URL (scoped to current user for security)
     if (generation_id) {
       await supabase
         .from('generations')
         .update({ drive_folder_url: folder.url })
         .eq('id', generation_id)
+        .eq('teacher_id', user.id)
     }
 
     return NextResponse.json({

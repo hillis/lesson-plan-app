@@ -52,10 +52,11 @@ export async function POST(request: Request) {
       id: folder.id,
       name: name.trim(),
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create folder error:', error)
 
-    if (error.code === 401 || error.code === 403) {
+    const errCode = (error as { code?: number })?.code
+    if (errCode === 401 || errCode === 403) {
       return NextResponse.json(
         { error: 'Drive access expired', needsReauth: true },
         { status: 401 }

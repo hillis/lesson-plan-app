@@ -32,7 +32,8 @@ export async function GET() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Failed to fetch templates:', error)
+    return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 })
   }
 
   // Prepend default template (always first)
@@ -86,7 +87,8 @@ export async function POST(request: NextRequest) {
     })
 
   if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 })
+    console.error('Template upload error:', uploadError)
+    return NextResponse.json({ error: 'Failed to upload template' }, { status: 500 })
   }
 
   // Extract name without .docx extension for display
@@ -108,7 +110,8 @@ export async function POST(request: NextRequest) {
   if (error) {
     // Clean up storage file if database insert fails
     await supabase.storage.from('templates').remove([filePath])
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Failed to save template record:', error)
+    return NextResponse.json({ error: 'Failed to save template' }, { status: 500 })
   }
 
   return NextResponse.json(data)
@@ -179,7 +182,8 @@ export async function DELETE(request: NextRequest) {
     .eq('teacher_id', user.id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Failed to delete template:', error)
+    return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

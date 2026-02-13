@@ -45,7 +45,8 @@ export async function GET(request: Request) {
       console.warn(`Generated file ${id} missing from storage: ${file.file_path}`)
       return NextResponse.json({ error: 'File not available' }, { status: 404 })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Storage signed URL error:', error)
+    return NextResponse.json({ error: 'Failed to retrieve file' }, { status: 500 })
   }
 
   return NextResponse.json({

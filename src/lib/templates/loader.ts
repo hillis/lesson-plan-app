@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import * as fs from 'fs'
+import { readFile } from 'fs/promises'
 import * as path from 'path'
 
 const DEFAULT_TEMPLATE_ID = 'default-cte'
@@ -69,8 +69,8 @@ async function loadDefaultTemplate(): Promise<Buffer> {
   )
 
   try {
-    return fs.readFileSync(templatePath)
-  } catch (error) {
+    return await readFile(templatePath)
+  } catch {
     throw new Error(
       `Default template not found at ${templatePath}. Please ensure cte-lesson-plan.docx exists in public/templates/`
     )

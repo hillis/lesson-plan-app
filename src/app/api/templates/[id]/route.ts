@@ -76,7 +76,8 @@ export async function PATCH(
     .single()
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
+    console.error('Failed to rename template:', updateError)
+    return NextResponse.json({ error: 'Failed to rename template' }, { status: 500 })
   }
 
   return NextResponse.json(updatedTemplate)

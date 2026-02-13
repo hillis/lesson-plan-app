@@ -1,4 +1,5 @@
 import { google } from 'googleapis'
+import { Readable } from 'stream'
 
 export function createDriveClient(
   accessToken: string,
@@ -58,7 +59,7 @@ export async function uploadFile(
     },
     media: {
       mimeType,
-      body: require('stream').Readable.from(content),
+      body: Readable.from(content),
     },
     fields: 'id, webViewLink',
   })
@@ -73,8 +74,11 @@ export async function listFolders(
   drive: ReturnType<typeof google.drive>,
   parentId?: string
 ) {
-  const query = parentId
-    ? `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+  // Sanitize parentId to prevent query injection (only allow alphanumeric, hyphens, underscores)
+  const sanitizedParentId = parentId?.replace(/[^a-zA-Z0-9_-]/g, '')
+
+  const query = sanitizedParentId
+    ? `'${sanitizedParentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
     : `mimeType = 'application/vnd.google-apps.folder' and 'root' in parents and trashed = false`
 
   const response = await drive.files.list({

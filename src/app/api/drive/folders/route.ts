@@ -44,11 +44,12 @@ export async function GET(request: Request) {
 
     const folders = await listFolders(drive, parentId)
     return NextResponse.json(folders)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Drive folders error:', error)
 
     // Check for auth-specific errors (token expired, scope insufficient)
-    if (error.code === 401 || error.code === 403) {
+    const errCode = (error as { code?: number })?.code
+    if (errCode === 401 || errCode === 403) {
       return NextResponse.json(
         { error: 'Drive access expired', needsReauth: true },
         { status: 401 }

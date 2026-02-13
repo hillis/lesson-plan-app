@@ -17,24 +17,25 @@ export async function GET() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Failed to fetch generated files:', error)
+    return NextResponse.json({ error: 'Failed to fetch files' }, { status: 500 })
   }
 
-  // Filter out files with missing storage files
-  // Use createSignedUrl as existence check (lightweight, doesn't download file)
-  const availableFiles = []
-  for (const file of data || []) {
-    const { error: storageError } = await supabase.storage
-      .from('generated-files')
-      .createSignedUrl(file.file_path, 60)
-
-    if (storageError) {
-      // File missing from storage - hide from list
-      console.warn(`Generated file ${file.id} missing from storage: ${file.file_path}`)
-      continue
-    }
-    availableFiles.push(file)
-  }
+  // Filter out files with missing storage files (checks run in parallel)
+  const files = data || []
+  const checks = await Promise.all(
+    files.map(async (file) => {
+      const { error: storageError } = await supabase.storage
+        .from('generated-files')
+        .createSignedUrl(file.file_path, 60)
+      if (storageError) {
+        console.warn(`Generated file ${file.id} missing from storage: ${file.file_path}`)
+        return null
+      }
+      return file
+    })
+  )
+  const availableFiles = checks.filter(Boolean)
 
   return NextResponse.json(availableFiles)
 }
@@ -84,7 +85,8 @@ export async function PATCH(request: Request) {
     .single()
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
+    console.error('Failed to rename file:', updateError)
+    return NextResponse.json({ error: 'Failed to rename file' }, { status: 500 })
   }
 
   return NextResponse.json(updated)
@@ -126,7 +128,8 @@ export async function DELETE(request: Request) {
     .eq('teacher_id', user.id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Failed to delete file:', error)
+    return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

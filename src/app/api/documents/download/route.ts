@@ -4,6 +4,11 @@ import { convertDocxToPdf } from 'docx-pdf-converter'
 
 const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
+// Sanitize filename for use in Content-Disposition headers to prevent header injection
+function sanitizeFilename(filename: string): string {
+  return filename.replace(/["\\\r\n]/g, '_')
+}
+
 export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -65,8 +70,8 @@ export async function GET(request: Request) {
       const buffer = Buffer.from(await fileData.arrayBuffer())
       const result = await convertDocxToPdf(buffer, doc.name)
 
-      // Generate PDF filename (replace .docx with .pdf)
-      const pdfFilename = doc.name.replace(/\.docx$/i, '.pdf')
+      // Generate PDF filename (replace .docx with .pdf, sanitize for header safety)
+      const pdfFilename = sanitizeFilename(doc.name.replace(/\.docx$/i, '.pdf'))
 
       // Return PDF directly as response (convert Buffer to Uint8Array for Response)
       return new Response(new Uint8Array(result.buffer), {
@@ -97,7 +102,8 @@ export async function GET(request: Request) {
       console.warn(`Document ${id} missing from storage: ${doc.file_path}`)
       return NextResponse.json({ error: 'File not available' }, { status: 404 })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Storage signed URL error:', error)
+    return NextResponse.json({ error: 'Failed to retrieve file' }, { status: 500 })
   }
 
   return NextResponse.json({
